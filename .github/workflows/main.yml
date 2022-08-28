@@ -2,9 +2,9 @@ name: Main build
 
 on:
   push:
-    branches: [ master ]
+    branches: [ main ]
   pull_request:
-    branches: [ master ]
+    branches: [ main ]
   schedule:
     - cron: '24 9 * * 6'
   workflow_dispatch:
