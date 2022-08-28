@@ -1,6 +1,6 @@
 ![License: AGPLv3](https://img.shields.io/github/license/alexandreteles/revanced-releases-api)
 ![GitHub last commit](https://img.shields.io/github/last-commit/alexandreteles/revanced-releases-api)
-![GitHub Workflow Status](https://img.shields.io/github/workflow/status/alexandreteles/revanced-releases-api/Build%20and%20push%20Docker%20image)
+![GitHub Workflow Status](https://img.shields.io/github/workflow/status/alexandreteles/revanced-releases-api/Main%20build)
 
 # ReVanced Releases API
 
