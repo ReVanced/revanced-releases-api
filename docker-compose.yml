@@ -1,0 +1,7 @@
+version: "3.8"
+
+services:
+  revanced-releases-api:
+    container_name: revanced-releases-api
+    image: alexandreteles/revanced-releases-api:latest
+    restart: always

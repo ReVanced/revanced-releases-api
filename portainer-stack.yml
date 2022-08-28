@@ -1,0 +1,17 @@
+---
+version: "3.8"
+services:
+  revanced-releases-api:
+    image: alexandreteles/revanced-releases-api:latest
+    container_name: revanced-releases-api
+    environment:
+      - GITHUB_TOKEN=
+    ports:
+      - 127.0.0.1:8000:8000
+    networks:
+      - infra
+    restart: unless-stopped
+
+networks:
+   infra:
+     external: true
