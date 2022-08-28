@@ -1,0 +1,42 @@
+[docs]
+
+title = "ReVanced Releases API"
+description = """
+This website provides a JSON API for ReVanced Releases 🚀
+
+Changelogs are not included but can be found on the [ReVanced Repositories](https://github.com/revanced/).
+
+The team also have a [Discord Server](https://revanced.app/discord) if you need help.
+
+### API Endpoints
+
+* [apps](/apps) - Returns all currently patchable apps
+* [tools](/tools) - Returns the latest version of all ReVanced tools and Vanced MicroG
+* [patches](/patches) - Returns the latest version of all ReVanced patches
+
+There is no cache on this API because we trust our fellow developers to implement a cache on their end.
+
+So please be kind and don't blow up the API with requests or we will have to block your IP address.
+
+Godspeed 💀
+
+"""
+version = "0.1 alpha"
+
+[license]
+
+name = "AGPL-3.0"
+url = "https://www.gnu.org/licenses/agpl-3.0.en.html"
+
+[uvicorn]
+
+host = "0.0.0.0"
+port = 8000
+
+[slowapi]
+
+limit = "15/minute"
+
+[app]
+
+repositories = ["TeamVanced/VancedMicroG", "revanced/revanced-cli", "revanced/revanced-patches", "revanced/revanced-integrations"]
