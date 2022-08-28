@@ -8,7 +8,7 @@ WORKDIR /usr/src/app
 COPY . .
 
 RUN apt update && \
-    apt-get install gcc -y && \
+    apt-get install build-essential libffi-dev -y && \
     pip install --no-cache-dir -r requirements.txt
 
 CMD [ "python3", "./main.py" ]
