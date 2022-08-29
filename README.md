@@ -8,9 +8,15 @@ This is a simple API that returns the latest ReVanced releases.
 
 ## Usage
 
-The API is available at [to be decided].
+The API is available at [https://revanced-releases-api.afterst0rm.xyz/](https://revanced-releases-api.afterst0rm.xyz/).
 
-For development purposes, you can run the API locally by cloning this repository and running `docker-compose up` or `docker-compose up --build` if you want to rebuild the image. Optionally you can run the application without Docker by running `pip -U install -r ./requirements.txt` and `python ./main.py`.
+For development purposes, you can run the API locally by cloning this repository and running `docker-compose up` or `docker-compose up --build` if you want to rebuild the image. Optionally you can run the application without Docker by running `pip -U install -r ./requirements.txt` and `python ./main.py`. Remember to set the environment variable `GITHUB_TOKEN` to a valid token if you want to run the API locally.
+
+### API Endpoints
+
+* [apps](https://revanced-releases-api.afterst0rm.xyz/apps) - Returns all currently patchable apps
+* [tools](https://revanced-releases-api.afterst0rm.xyz/tools) - Returns the latest version of all ReVanced tools and Vanced MicroG
+* [patches](https://revanced-releases-api.afterst0rm.xyz/patches) - Returns the latest version of all ReVanced patches
 
 ## Contributing
 
