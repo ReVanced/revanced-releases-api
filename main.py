@@ -67,7 +67,7 @@ async def apps(request: Request, response: Response) -> dict:
     """
     return await releases.get_patchable_apps()
 
-@app.get('/patches', response_model=ResponseModels.LatestPatches)
+@app.get('/patches', response_model=ResponseModels.Patches)
 @limiter.limit(config['slowapi']['limit'])
 async def patches(request: Request, response: Response) -> dict:
     """Get latest patches.
@@ -75,7 +75,8 @@ async def patches(request: Request, response: Response) -> dict:
     Returns:
         json: list of latest patches
     """
-    return await releases.get_latest_patches()
+    
+    return await releases.get_patches_json()
 
 # Run app
 if __name__ == '__main__':

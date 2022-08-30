@@ -1,9 +1,8 @@
 import os
-import pycmarkgfm
+import orjson
 import httpx_cache
 from typing import Dict, List
 from base64 import b64decode
-from bs4 import BeautifulSoup
 
 class Releases:
     
@@ -58,12 +57,13 @@ class Releases:
         
         return releases
 
-    async def get_patches_readme(self, client: httpx_cache.AsyncClient) -> str:
-        """Get revanced-patches repository's README.md.
+    async def _get_patches_readme(self, client: httpx_cache.AsyncClient) -> str:
+        # Get revanced-patches repository's README.md.
+        #
+        # Returns:
+        #    str: README.md content
+        #
         
-        Returns:
-            str: README.md content
-        """
         response = await client.get(f"https://api.github.com/repos/revanced/revanced-patches/contents/README.md")
         
         return b64decode(response.json()['content']).decode('utf-8')
@@ -78,39 +78,41 @@ class Releases:
         packages['apps'] = []
         
         async with httpx_cache.AsyncClient(headers=self.headers, http2=True) as client:
-            content = await self.get_patches_readme(client)
+            content = await self._get_patches_readme(client)
             
         for line in content.splitlines():
             if line.startswith(u'###'):
                 packages['apps'].append(line.split('`')[1])
         
         return packages
-
-    async def get_latest_patches(self) -> dict:
-        """Get latest patches from revanced-patches repository.
+    
+    async def _get_patches_json(self, client: httpx_cache.AsyncClient) -> dict:
+        # Get revanced-patches repository's README.md.
+        #
+        # Returns:
+        #    dict: JSON content
+        #
+        
+        content = await client.get(f"https://api.github.com/repos/revanced/revanced-patches/contents/patches.json")
+        
+        return orjson.loads(b64decode(content.json()['content']).decode('utf-8'))
+    
+    async def get_patches_json(self, simplified: bool = False) -> dict:
+        """Get patches.json from revanced-patches repository.
+        
+        Args:
+            simplified (bool): If True, returns a simplified version of patches.json
         
         Returns:
             dict: Patches available for a given app
         """
-        patches: Dict[str, List] = {}
-        patches['patches'] = []
+        async def generate_simplified_json(payload: dict) -> dict:
+            return {}    
         
         async with httpx_cache.AsyncClient(headers=self.headers, http2=True) as client:
-            content = await self.get_patches_readme(client)
+            content = await self._get_patches_json(client)
         
-        html = pycmarkgfm.gfm_to_html(content)
-        soup = BeautifulSoup(html, 'lxml')
+        if simplified:
+            return await generate_simplified_json(content)
         
-        headings = soup.find_all('h3')
-        
-        for heading in headings:
-            app_name = heading.text.split(' ')[1]
-            for patch in heading.find_next_sibling().find_all('tr')[1:]:
-                app_patches = patch.find_all('td')
-                patches['patches'].append({"target_app": app_name,
-                                           "patch_name" : app_patches[0].text,
-                                           "description": app_patches[1].text,
-                                           "target_version": app_patches[2].text
-                                           })
-            
-        return patches
+        return content

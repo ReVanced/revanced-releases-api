@@ -56,14 +56,23 @@ class LatestTools(BaseModel):
     class Config:  
         use_enum_values = True
         
-class LatestPatches(BaseModel):
+class SimplifiedPatches(BaseModel):
     """Implements the JSON response model for the /patches endpoint.
 
     Args:
         BaseModel (pydantic.BaseModel): BaseModel from pydantic
     """
     
-    patches: List[ Dict[ ResponseFields.LatestPatchesFields, str ] ]
+    patches: List[ Dict[ ResponseFields.SimplifiedPatchesFields, str ] ]
     
     class Config:  
         use_enum_values = True
+
+class Patches(BaseModel):
+    """_summary_
+
+    Args:
+        BaseModel (pydantic.BaseModel): BaseModel from pydantic
+    """
+    
+    __root__ = List[ Dict[ str, Union[str, List[str], Dict, bool] ] ]

@@ -14,7 +14,7 @@ class LatestToolsFields(str, Enum):
     browser_download_url = 'browser_download_url'
     content_type = 'content_type'
 
-class LatestPatchesFields(str, Enum):
+class SimplifiedPatchesFields(str, Enum):
     """Implements the fields for the /patches endpoint.
 
     Args:
