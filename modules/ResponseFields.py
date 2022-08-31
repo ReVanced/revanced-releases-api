@@ -1,28 +1,33 @@
-from enum import Enum
+from pydantic import BaseModel
 
-class LatestToolsFields(str, Enum):
+class ToolsResponseFields(BaseModel):
     """Implements the fields for the /tools endpoint.
-
-    Args:
-        str (str): String
-        Enum (Enum): Enum from pydantic
-    """
     
-    repository = 'repository'
-    name = 'name'
-    size = 'size'
-    browser_download_url = 'browser_download_url'
-    content_type = 'content_type'
-
-class SimplifiedPatchesFields(str, Enum):
+    Args:
+        BaseModel (pydantic.BaseModel): BaseModel from pydantic
+    """
+    repository: str
+    name: str
+    size: str
+    browser_download_url: str
+    content_type: str
+class CompatiblePackagesResponseFields(BaseModel):
+    """Implements the fields for compatible packages in the PatchesResponseFields class.
+    
+    Args:
+        BaseModel (pydantic.BaseModel): BaseModel from pydantic
+    """
+    name: str
+    verstions: list[ str ] | None
+class PatchesResponseFields(BaseModel):
     """Implements the fields for the /patches endpoint.
-
-    Args:
-        str (str): String
-        Enum (Enum): Enum from pydantic
-    """
     
-    target_app = "target_app"
-    patch_name = "patch_name"
-    description = "description"
-    target_version = "target_version"
+    Args:
+        BaseModel (pydantic.BaseModel): BaseModel from pydantic
+    """
+    name: str
+    description: str
+    version: str
+    excluded: bool
+    dependencies: list[ str ] | None
+    compatiblePackages: list[ CompatiblePackagesResponseFields ]

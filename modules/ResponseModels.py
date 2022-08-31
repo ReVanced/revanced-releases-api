@@ -1,5 +1,4 @@
 import modules.ResponseFields as ResponseFields
-from typing import Dict, Union, List
 from pydantic import BaseModel, create_model
 
 """Implements pydantic models and model generator for the API's responses."""
@@ -22,7 +21,7 @@ class ModelGenerator():
             return create_model(name, **{k: self.__make_model(v, k) for k, v in v.items()}), ...
         return None, v
 
-    def generate(self, v: Dict, name: str):
+    def generate(self, v: dict, name: str):
         
         """Returns a pydantic model from a dictionary.
 
@@ -35,44 +34,29 @@ class ModelGenerator():
         """
         return self.__make_model(v, name)[0]
 
-class SupportedApps(BaseModel):
+class AppsResponseModel(BaseModel):
     """Implements the JSON response model for the /apps endpoint.
 
     Args:
         BaseModel (pydantic.BaseModel): BaseModel from pydantic
     """
     
-    apps: List[str]
+    apps: list[str]
 
-class LatestTools(BaseModel):
+class ToolsResponseModel(BaseModel):
     """Implements the JSON response model for the /tools endpoint.
 
     Args:
         BaseModel (pydantic.BaseModel): BaseModel from pydantic
     """
     
-    tools: List[ Dict[ ResponseFields.LatestToolsFields, str ] ]
-    
-    class Config:  
-        use_enum_values = True
-        
-class SimplifiedPatches(BaseModel):
+    tools: list[ ResponseFields.ToolsResponseFields ]
+
+class PatchesResponseModel(BaseModel):
     """Implements the JSON response model for the /patches endpoint.
 
     Args:
         BaseModel (pydantic.BaseModel): BaseModel from pydantic
     """
     
-    patches: List[ Dict[ ResponseFields.SimplifiedPatchesFields, str ] ]
-    
-    class Config:  
-        use_enum_values = True
-
-class Patches(BaseModel):
-    """_summary_
-
-    Args:
-        BaseModel (pydantic.BaseModel): BaseModel from pydantic
-    """
-    
-    __root__ = List[ Dict[ str, Union[str, List[str], Dict, bool] ] ]
+    __root__: list[ ResponseFields.PatchesResponseFields ]

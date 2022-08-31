@@ -47,7 +47,7 @@ async def root(request: Request, response: Response) -> RedirectResponse:
     """
     return RedirectResponse(url="/docs")
 
-@app.get('/tools', response_model=ResponseModels.LatestTools)
+@app.get('/tools', response_model=ResponseModels.ToolsResponseModel)
 @limiter.limit(config['slowapi']['limit'])
 async def tools(request: Request, response: Response) -> dict:
     """Get patching tools' latest version.
@@ -57,7 +57,7 @@ async def tools(request: Request, response: Response) -> dict:
     """
     return await releases.get_latest_releases(config['app']['repositories'])
 
-@app.get('/apps', response_model=ResponseModels.SupportedApps)
+@app.get('/apps', response_model=ResponseModels.AppsResponseModel)
 @limiter.limit(config['slowapi']['limit'])
 async def apps(request: Request, response: Response) -> dict:
     """Get patchable apps.
@@ -67,7 +67,7 @@ async def apps(request: Request, response: Response) -> dict:
     """
     return await releases.get_patchable_apps()
 
-@app.get('/patches', response_model=ResponseModels.Patches)
+@app.get('/patches', response_model=ResponseModels.PatchesResponseModel)
 @limiter.limit(config['slowapi']['limit'])
 async def patches(request: Request, response: Response) -> dict:
     """Get latest patches.
