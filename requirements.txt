@@ -7,3 +7,4 @@ beautifulsoup4>=4.11.1
 lxml>=4.9.1
 toml>=0.10.2
 slowapi>=0.1.6
+orjson>=3.8.0
