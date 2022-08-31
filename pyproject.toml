@@ -14,6 +14,7 @@ httpx-cache = ">=0.6.0"
 toml = ">=0.10.2"
 slowapi = ">=0.1.6"
 orjson = ">=3.8.0"
+fastapi-cache2 = ">=0.1.9"
 
 [tool.poetry.dev-dependencies]
 mypy = ">=0.971"
@@ -24,6 +25,7 @@ httpx-cache = ">=0.6.0"
 toml = ">=0.10.2"
 slowapi = ">=0.1.6"
 orjson = ">=3.8.0"
+fastapi-cache2 = ">=0.1.9"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
