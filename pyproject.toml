@@ -1,0 +1,30 @@
+[tool.poetry]
+name = "revanced-releases-api"
+version = "0.1.0"
+description = "JSON API for ReVanced Releases"
+authors = ["Alexandre Teles <alexandre.teles@ufba.br>"]
+license = "AGPLv3"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+fastapi = ">=0.81.0"
+uvicorn = {version = ">=0.18.3", extras = ["standard"]}
+httpx = {version = ">=0.23.0", extras = ["http2"]}
+httpx-cache = ">=0.6.0"
+toml = ">=0.10.2"
+slowapi = ">=0.1.6"
+orjson = ">=3.8.0"
+
+[tool.poetry.dev-dependencies]
+mypy = ">=0.971"
+fastapi = ">=0.81.0"
+uvicorn = {version = ">=0.18.3", extras = ["standard"]}
+httpx = {version = ">=0.23.0", extras = ["http2"]}
+httpx-cache = ">=0.6.0"
+toml = ">=0.10.2"
+slowapi = ">=0.1.6"
+orjson = ">=3.8.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
