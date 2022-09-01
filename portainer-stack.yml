@@ -1,6 +1,10 @@
 ---
 version: "3.8"
 
+volumes:
+  redis-data:
+    driver: local
+
 services:
   redis:
     container_name: revanced-releases-api-redis
@@ -14,7 +18,7 @@ services:
     container_name: revanced-releases-api
     image: alexandreteles/revanced-releases-api:latest
     environment:
-      - REDIS_HOST=revanced-releases-api-redis
+      - REDIS_URL=revanced-releases-api-redis
       - REDIS_PORT=6379
       - GITHUB_TOKEN=YOUR_GITHUB_TOKEN
     ports:
