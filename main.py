@@ -12,6 +12,7 @@ from slowapi.errors import RateLimitExceeded
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
 from fastapi_cache.decorator import cache
+import aioredis
 
 """Get latest ReVanced releases from GitHub API."""
 

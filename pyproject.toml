@@ -16,6 +16,7 @@ slowapi = ">=0.1.6"
 orjson = ">=3.8.0"
 fastapi-cache2 = ">=0.1.9"
 aioredis = ">=2.0.1"
+redis = ">=4.3.4"
 
 [tool.poetry.dev-dependencies]
 mypy = ">=0.971"
@@ -28,6 +29,7 @@ slowapi = ">=0.1.6"
 orjson = ">=3.8.0"
 fastapi-cache2 = ">=0.1.9"
 aioredis = ">=2.0.1"
+redis = ">=4.3.4"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
