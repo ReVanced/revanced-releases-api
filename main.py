@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 
+import os
 import toml
 import uvicorn
+import aioredis
 from fastapi import FastAPI, Request, Response
 from modules.Releases import Releases
 from fastapi.responses import RedirectResponse
@@ -12,13 +14,20 @@ from slowapi.errors import RateLimitExceeded
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
 from fastapi_cache.decorator import cache
-import aioredis
 
 """Get latest ReVanced releases from GitHub API."""
 
 # Load config
 
-config = toml.load("config.toml")
+config: dict = toml.load("config.toml")
+
+# Redis connection parameters
+
+redis_config: dict[ str, str | int ] = {
+    "url": f"redis://{os.environ['REDIS_URL']}",
+    "port": os.environ['REDIS_PORT'],
+    "collection": 0
+}
 
 # Create releases instance
 
@@ -42,7 +51,7 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 # Setup cache
 
 @cache()
-async def get_cache():
+async def get_cache() -> int:
     return 1
 
 # Routes
@@ -59,7 +68,7 @@ async def root(request: Request, response: Response) -> RedirectResponse:
 
 @app.get('/tools', response_model=ResponseModels.ToolsResponseModel)
 @limiter.limit(config['slowapi']['limit'])
-@cache(expire=60)
+@cache(config['cache']['expire'])
 async def tools(request: Request, response: Response) -> dict:
     """Get patching tools' latest version.
 
@@ -70,7 +79,7 @@ async def tools(request: Request, response: Response) -> dict:
 
 @app.get('/apps', response_model=ResponseModels.AppsResponseModel)
 @limiter.limit(config['slowapi']['limit'])
-@cache(expire=60)
+@cache(config['cache']['expire'])
 async def apps(request: Request, response: Response) -> dict:
     """Get patchable apps.
 
@@ -81,7 +90,7 @@ async def apps(request: Request, response: Response) -> dict:
 
 @app.get('/patches', response_model=ResponseModels.PatchesResponseModel)
 @limiter.limit(config['slowapi']['limit'])
-@cache(expire=60)
+@cache(config['cache']['expire'])
 async def patches(request: Request, response: Response) -> dict:
     """Get latest patches.
 
@@ -92,9 +101,12 @@ async def patches(request: Request, response: Response) -> dict:
     return await releases.get_patches_json()
 
 @app.on_event("startup")
-async def startup():
-    redis =  aioredis.from_url("redis://localhost", encoding="utf8", decode_responses=True)
+async def startup() -> None:
+    redis_url = f"{redis_config['url']}:{redis_config['port']}/{redis_config['collection']}"
+    redis =  aioredis.from_url(redis_url, encoding="utf8", decode_responses=True)
     FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
+    
+    return None
 
 # Run app
 if __name__ == '__main__':

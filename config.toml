@@ -8,15 +8,22 @@ Changelogs are not included but can be found on the [ReVanced Repositories](http
 
 The team also have a [Discord Server](https://revanced.app/discord) if you need help.
 
-### API Endpoints
+## API Endpoints
 
 * [apps](/apps) - Returns all currently patchable apps
 * [tools](/tools) - Returns the latest version of all ReVanced tools and Vanced MicroG
 * [patches](/patches) - Returns the latest version of all ReVanced patches
 
-There is no cache on this API because we trust our fellow developers to implement a cache on their end.
+## Additional Information
 
-So please be kind and don't blow up the API with requests or we will have to block your IP address.
+* Rate Limiting - 15 requests per minute
+* Cache - 1 minute
+
+## Important Notes
+
+1. Although we will try to avoid breaking changes, we can't guarantee that it won't happen.
+2. Okay, the api is now cached and rate limited (per endpoint). But please don't abuse it, we don't want to have to block you.
+3. Make sure to implement a cache system on your end to avoid unnecessary requests.
 
 Godspeed 💀
 
@@ -36,6 +43,9 @@ port = 8000
 [slowapi]
 
 limit = "15/minute"
+
+[cache]
+expire = 60
 
 [app]
 

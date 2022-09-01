@@ -18,7 +18,7 @@ class CompatiblePackagesResponseFields(BaseModel):
         BaseModel (pydantic.BaseModel): BaseModel from pydantic
     """
     name: str
-    verstions: list[ str ] | None
+    versions: list[ str ] | None
 class PatchesResponseFields(BaseModel):
     """Implements the fields for the /patches endpoint.
     

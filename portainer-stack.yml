@@ -1,13 +1,24 @@
 ---
 version: "3.8"
+
 services:
+  redis:
+    container_name: revanced-releases-api-redis
+    image: redis:latest
+    volumes:
+      - redis-data:/data
+    networks:
+      - infra
+    restart: always
   revanced-releases-api:
-    image: alexandreteles/revanced-releases-api:latest
     container_name: revanced-releases-api
+    image: alexandreteles/revanced-releases-api:latest
     environment:
-      - GITHUB_TOKEN=
+      - REDIS_HOST=revanced-releases-api-redis
+      - REDIS_PORT=6379
+      - GITHUB_TOKEN=YOUR_GITHUB_TOKEN
     ports:
-      - 127.0.0.1:8000:8000
+      - 127.0.0.1:7934:8000
     networks:
       - infra
     restart: unless-stopped
