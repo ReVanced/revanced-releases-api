@@ -9,6 +9,9 @@ import modules.ResponseModels as ResponseModels
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
+from fastapi_cache import FastAPICache
+from fastapi_cache.backends.redis import RedisBackend
+from fastapi_cache.decorator import cache
 
 """Get latest ReVanced releases from GitHub API."""
 
@@ -35,6 +38,12 @@ limiter = Limiter(key_func=get_remote_address, headers_enabled=True)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
+# Setup cache
+
+@cache()
+async def get_cache():
+    return 1
+
 # Routes
 
 @app.get("/", response_class=RedirectResponse, status_code=301)
@@ -49,6 +58,7 @@ async def root(request: Request, response: Response) -> RedirectResponse:
 
 @app.get('/tools', response_model=ResponseModels.ToolsResponseModel)
 @limiter.limit(config['slowapi']['limit'])
+@cache(expire=60)
 async def tools(request: Request, response: Response) -> dict:
     """Get patching tools' latest version.
 
@@ -59,6 +69,7 @@ async def tools(request: Request, response: Response) -> dict:
 
 @app.get('/apps', response_model=ResponseModels.AppsResponseModel)
 @limiter.limit(config['slowapi']['limit'])
+@cache(expire=60)
 async def apps(request: Request, response: Response) -> dict:
     """Get patchable apps.
 
@@ -69,6 +80,7 @@ async def apps(request: Request, response: Response) -> dict:
 
 @app.get('/patches', response_model=ResponseModels.PatchesResponseModel)
 @limiter.limit(config['slowapi']['limit'])
+@cache(expire=60)
 async def patches(request: Request, response: Response) -> dict:
     """Get latest patches.
 
@@ -77,6 +89,11 @@ async def patches(request: Request, response: Response) -> dict:
     """
     
     return await releases.get_patches_json()
+
+@app.on_event("startup")
+async def startup():
+    redis =  aioredis.from_url("redis://localhost", encoding="utf8", decode_responses=True)
+    FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
 
 # Run app
 if __name__ == '__main__':
