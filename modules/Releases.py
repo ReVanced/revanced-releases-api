@@ -79,11 +79,8 @@ class Releases:
         
         return content
     
-    async def get_patches_json(self, simplified: bool = False) -> dict:
+    async def get_patches_json(self) -> dict:
         """Get patches.json from revanced-patches repository.
-        
-        Args:
-            simplified (bool): If True, returns a simplified version of patches.json
         
         Returns:
             dict: Patches available for a given app
