@@ -4,19 +4,19 @@
 ![GitHub last commit](https://img.shields.io/github/last-commit/alexandreteles/revanced-releases-api)
 ![GitHub Workflow Status](https://img.shields.io/github/workflow/status/alexandreteles/revanced-releases-api/Main%20build)
 
-This is a simple API that returns the latest ReVanced releases.
+This is a simple API that returns the latest ReVanced releases, patches and contributors.
 
 ## Usage
 
 The API is available at [https://revanced-releases-api.afterst0rm.xyz/](https://revanced-releases-api.afterst0rm.xyz/).
 
-For development purposes, you can run the API locally by cloning this repository and running `docker-compose up` or `docker-compose up --build` if you want to rebuild the image. Optionally you can run the application without Docker by running `pip -U install -r ./requirements.txt` and `python ./main.py`. Remember to set the environment variable `GITHUB_TOKEN` to a valid token if you want to run the API locally and make sure to have a `redis` instance running.
+You can deploy your own instance by cloning this repository, editing the `docker-compose.yml` file to include your GitHub token and running `docker-compose up` or `docker-compose up --build` if you want to build the image locally instead of pulling from Docker Hub. Optionally you can run the application without Docker by running `poetry install` and `poetry run ./main.py`. In this case, you'll also need a redis server and setup the `REDIS_URL`, `REDIS_PORT` and `GITHUB_TOKEN` environment variables on your system.
 
 ### API Endpoints
 
-* [apps](https://revanced-releases-api.afterst0rm.xyz/apps) - Returns all currently patchable apps
 * [tools](https://revanced-releases-api.afterst0rm.xyz/tools) - Returns the latest version of all ReVanced tools and Vanced MicroG
 * [patches](https://revanced-releases-api.afterst0rm.xyz/patches) - Returns the latest version of all ReVanced patches
+* [contributors](https://revanced-releases-api.afterst0rm.xyz/contributors) - Returns contributors for all ReVanced projects
 
 ## Contributing
 
