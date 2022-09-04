@@ -1,7 +1,6 @@
 import os
 import orjson
 import httpx_cache
-from typing import Dict, List
 from base64 import b64decode
 from modules.InternalCache import InternalCache
 
@@ -51,7 +50,7 @@ class Releases:
             dict: A dictionary containing assets from each repository
         """
         
-        releases: Dict[str, List] = {}
+        releases: dict[str, list] = {}
         releases['tools'] = []
         
         try:
@@ -117,7 +116,7 @@ class Releases:
             dict: A dictionary containing the contributors from each repository
         """
         
-        contributors: Dict[str, List] = {}
+        contributors: dict[str, list] = {}
         contributors['repositories'] = []
         
         try:
