@@ -3,8 +3,11 @@ import orjson
 import httpx_cache
 from typing import Dict, List
 from base64 import b64decode
+from modules.InternalCache import InternalCache
 
 class Releases:
+    
+    InternalCache = InternalCache()
     
     """Implements the methods required to get the latest releases and patches from revanced repositories."""
 
@@ -51,12 +54,17 @@ class Releases:
         releases: Dict[str, List] = {}
         releases['tools'] = []
         
-        async with httpx_cache.AsyncClient(headers=self.headers, http2=True) as client:
-            for repository in repositories:
-                files = await self._get_release(client, repository)
-                if files:
-                    for file in files:
-                        releases['tools'].append(file)
+        try:
+            cached_releases = await self.InternalCache.get("releases")
+            return cached_releases
+        except:
+            async with httpx_cache.AsyncClient(headers=self.headers, http2=True) as client:
+                for repository in repositories:
+                    files = await self._get_release(client, repository)
+                    if files:
+                        for file in files:
+                            releases['tools'].append(file)
+            await self.InternalCache.store('releases', releases)
         
         return releases
     
@@ -80,17 +88,15 @@ class Releases:
         Returns:
             dict: Patches available for a given app
         """
+        try:
+            cached_patches = await self.InternalCache.get("patches")
+            return cached_patches
+        except:
+            async with httpx_cache.AsyncClient(headers=self.headers, http2=True) as client:
+                patches = await self._get_patches_json(client)
+                await self.InternalCache.store('patches', patches)
         
-        async def generate_simplified_json(payload: dict) -> dict:
-            return {}    
-        
-        async with httpx_cache.AsyncClient(headers=self.headers, http2=True) as client:
-            content = await self._get_patches_json(client)
-        
-        if simplified:
-            return await generate_simplified_json(content)
-        
-        return content
+        return patches
 
     async def _get_contributors(self, client: httpx_cache.AsyncClient, repository: str) -> list:
         # Get contributors from a given repository.
@@ -119,11 +125,16 @@ class Releases:
         contributors: Dict[str, List] = {}
         contributors['repositories'] = []
         
-        async with httpx_cache.AsyncClient(headers=self.headers, http2=True) as client:
-            for repository in repositories:
-                if 'revanced' in repository:
-                    repo_contributors = await self._get_contributors(client, repository)
-                    data = { 'name': repository, 'contributors': repo_contributors }
-                    contributors['repositories'].append(data)
+        try:
+            cached_contributors = await self.InternalCache.get("contributors")
+            return cached_contributors
+        except:
+            async with httpx_cache.AsyncClient(headers=self.headers, http2=True) as client:
+                for repository in repositories:
+                    if 'revanced' in repository:
+                        repo_contributors = await self._get_contributors(client, repository)
+                        data = { 'name': repository, 'contributors': repo_contributors }
+                        contributors['repositories'].append(data)
+            await self.InternalCache.store('contributors', contributors)
         
         return contributors

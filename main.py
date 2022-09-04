@@ -26,7 +26,7 @@ config: dict = toml.load("config.toml")
 redis_config: dict[ str, str | int ] = {
     "url": f"redis://{os.environ['REDIS_URL']}",
     "port": os.environ['REDIS_PORT'],
-    "collection": 0
+    "database": config['cache']['database'],
 }
 
 # Create releases instance
@@ -102,7 +102,7 @@ async def contributors(request: Request, response: Response) -> dict:
 
 @app.on_event("startup")
 async def startup() -> None:
-    redis_url = f"{redis_config['url']}:{redis_config['port']}/{redis_config['collection']}"
+    redis_url = f"{redis_config['url']}:{redis_config['port']}/{redis_config['database']}"
     redis =  aioredis.from_url(redis_url, encoding="utf8", decode_responses=True)
     FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
     

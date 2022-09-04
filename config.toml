@@ -46,6 +46,11 @@ limit = "15/minute"
 
 [cache]
 expire = 60
+database = 0
+
+[internal-cache]
+expire = 300
+database = 1
 
 [app]
 
