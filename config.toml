@@ -10,9 +10,9 @@ The team also have a [Discord Server](https://revanced.app/discord) if you need 
 
 ## API Endpoints
 
-* [apps](/apps) - Returns all currently patchable apps
 * [tools](/tools) - Returns the latest version of all ReVanced tools and Vanced MicroG
 * [patches](/patches) - Returns the latest version of all ReVanced patches
+* [contributors](/contributors) - Returns contributors for all ReVanced projects
 
 ## Additional Information
 
@@ -28,7 +28,7 @@ The team also have a [Discord Server](https://revanced.app/discord) if you need 
 Godspeed 💀
 
 """
-version = "0.1 alpha"
+version = "0.2 alpha"
 
 [license]
 
@@ -49,4 +49,4 @@ expire = 60
 
 [app]
 
-repositories = ["TeamVanced/VancedMicroG", "revanced/revanced-cli", "revanced/revanced-patches", "revanced/revanced-integrations"]
+repositories = ["TeamVanced/VancedMicroG", "revanced/revanced-cli", "revanced/revanced-patches", "revanced/revanced-integrations", "revanced/revanced-manager"]

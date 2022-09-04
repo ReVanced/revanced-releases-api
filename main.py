@@ -77,17 +77,6 @@ async def tools(request: Request, response: Response) -> dict:
     """
     return await releases.get_latest_releases(config['app']['repositories'])
 
-@app.get('/apps', response_model=ResponseModels.AppsResponseModel)
-@limiter.limit(config['slowapi']['limit'])
-@cache(config['cache']['expire'])
-async def apps(request: Request, response: Response) -> dict:
-    """Get patchable apps.
-
-    Returns:
-        json: list of supported apps
-    """
-    return await releases.get_patchable_apps()
-
 @app.get('/patches', response_model=ResponseModels.PatchesResponseModel)
 @limiter.limit(config['slowapi']['limit'])
 @cache(config['cache']['expire'])
@@ -99,6 +88,17 @@ async def patches(request: Request, response: Response) -> dict:
     """
     
     return await releases.get_patches_json()
+
+@app.get('/contributors', response_model=ResponseModels.ContributorsResponseModel)
+@limiter.limit(config['slowapi']['limit'])
+@cache(config['cache']['expire'])
+async def contributors(request: Request, response: Response) -> dict:
+    """Get contributors.
+
+    Returns:
+        json: list of contributors
+    """
+    return await releases.get_contributors(config['app']['repositories'])
 
 @app.on_event("startup")
 async def startup() -> None:
