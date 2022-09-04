@@ -67,8 +67,8 @@ async def root(request: Request, response: Response) -> RedirectResponse:
     return RedirectResponse(url="/docs")
 
 @app.get('/tools', response_model=ResponseModels.ToolsResponseModel)
-@cache(config['cache']['expire'])
 @limiter.limit(config['slowapi']['limit'])
+@cache(config['cache']['expire'])
 async def tools(request: Request, response: Response) -> dict:
     """Get patching tools' latest version.
 
@@ -78,8 +78,8 @@ async def tools(request: Request, response: Response) -> dict:
     return await releases.get_latest_releases(config['app']['repositories'])
 
 @app.get('/patches', response_model=ResponseModels.PatchesResponseModel)
-@cache(config['cache']['expire'])
 @limiter.limit(config['slowapi']['limit'])
+@cache(config['cache']['expire'])
 async def patches(request: Request, response: Response) -> dict:
     """Get latest patches.
 
@@ -90,8 +90,8 @@ async def patches(request: Request, response: Response) -> dict:
     return await releases.get_patches_json()
 
 @app.get('/contributors', response_model=ResponseModels.ContributorsResponseModel)
-@cache(config['cache']['expire'])
 @limiter.limit(config['slowapi']['limit'])
+@cache(config['cache']['expire'])
 async def contributors(request: Request, response: Response) -> dict:
     """Get contributors.
 
