@@ -1,19 +1,19 @@
 #!/usr/bin/env python3
 
 import os
-import toml
-import uvicorn
-import aioredis
-from fastapi import FastAPI, Request, Response
+import toml #type: ignore
+import uvicorn #type: ignore
+import aioredis #type: ignore
+from fastapi import FastAPI, Request, Response #type: ignore
 from modules.Releases import Releases
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse #type: ignore
 import modules.ResponseModels as ResponseModels
-from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
-from slowapi.errors import RateLimitExceeded
-from fastapi_cache import FastAPICache
-from fastapi_cache.backends.redis import RedisBackend
-from fastapi_cache.decorator import cache
+from slowapi import Limiter, _rate_limit_exceeded_handler #type: ignore
+from slowapi.util import get_remote_address #type: ignore
+from slowapi.errors import RateLimitExceeded #type: ignore
+from fastapi_cache import FastAPICache #type: ignore
+from fastapi_cache.backends.redis import RedisBackend #type: ignore
+from fastapi_cache.decorator import cache #type: ignore
 
 """Get latest ReVanced releases from GitHub API."""
 

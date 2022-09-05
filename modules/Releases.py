@@ -1,6 +1,6 @@
 import os
-import orjson
-import httpx_cache
+import orjson #type: ignore
+import httpx_cache #type: ignore
 from base64 import b64decode
 from modules.InternalCache import InternalCache
 
