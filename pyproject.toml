@@ -7,7 +7,7 @@ license = "AGPLv3"
 
 [tool.poetry.dependencies]
 python = "^3.10"
-fastapi = ">=0.81.0"
+fastapi = ">=0.82.0"
 uvicorn = {version = ">=0.18.3", extras = ["standard"]}
 httpx = {version = ">=0.23.0", extras = ["http2"]}
 httpx-cache = ">=0.6.0"
@@ -18,11 +18,9 @@ fastapi-cache2 = ">=0.1.9"
 aioredis = {version = ">=2.0.1", extras = ["hiredis"]}
 redis = ">=4.3.4"
 msgpack = ">=1.0.4"
-pydantic = ">=1.10.1"
 
 [tool.poetry.dev-dependencies]
-mypy = ">=0.971"
-fastapi = ">=0.81.0"
+fastapi = ">=0.82.0"
 uvicorn = {version = ">=0.18.3", extras = ["standard"]}
 httpx = {version = ">=0.23.0", extras = ["http2"]}
 httpx-cache = ">=0.6.0"
@@ -33,7 +31,7 @@ fastapi-cache2 = ">=0.1.9"
 aioredis = {version = ">=2.0.1", extras = ["hiredis"]}
 redis = ">=4.3.4"
 msgpack = ">=1.0.4"
-pydantic = ">=1.10.1"
+mypy = ">=0.971"
 types-toml = ">=0.10.8"
 
 [build-system]
