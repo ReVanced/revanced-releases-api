@@ -1,7 +1,7 @@
 import os
-import toml #type: ignore
-import msgpack #type: ignore
-import aioredis #type: ignore
+import toml
+import msgpack
+import aioredis
 
 # Load config
 
