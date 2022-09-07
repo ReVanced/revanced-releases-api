@@ -4,16 +4,20 @@ import os
 import toml
 import uvicorn
 import aioredis
+
 from fastapi import FastAPI, Request, Response
-from modules.Releases import Releases
 from fastapi.responses import RedirectResponse
-import modules.ResponseModels as ResponseModels
-from slowapi import Limiter, _rate_limit_exceeded_handler
+
 from slowapi.util import get_remote_address
-from slowapi.errors import RateLimitExceeded
+from slowapi import Limiter, _rate_limit_exceeded_handler
+
 from fastapi_cache import FastAPICache
-from fastapi_cache.backends.redis import RedisBackend
 from fastapi_cache.decorator import cache
+from slowapi.errors import RateLimitExceeded
+from fastapi_cache.backends.redis import RedisBackend
+
+from modules.Releases import Releases
+import modules.models.ResponseModels as ResponseModels
 
 """Get latest ReVanced releases from GitHub API."""
 
@@ -99,6 +103,16 @@ async def contributors(request: Request, response: Response) -> dict:
         json: list of contributors
     """
     return await releases.get_contributors(config['app']['repositories'])
+
+@app.head('/ping', status_code=204)
+@limiter.limit(config['slowapi']['limit'])
+async def send_ping(request: Request, response: Response) -> None:
+    """Check if the API is running.
+
+    Returns:
+        None
+    """
+    return None
 
 @app.on_event("startup")
 async def startup() -> None:

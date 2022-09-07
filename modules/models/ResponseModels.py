@@ -1,5 +1,5 @@
-import modules.ResponseFields as ResponseFields
 from pydantic import BaseModel
+import modules.models.ResponseFields as ResponseFields
 
 """Implements pydantic models and model generator for the API's responses."""
 
@@ -29,3 +29,13 @@ class ContributorsResponseModel(BaseModel):
     """
     
     repositories: list[ ResponseFields.ContributorsResponseFields ]
+    
+class PingResponseModel(BaseModel):
+    """Implements the JSON response model for the /heartbeat endpoint.
+
+    Args:
+        BaseModel (pydantic.BaseModel): BaseModel from pydantic
+    """
+    
+    status: int
+    detail: str
