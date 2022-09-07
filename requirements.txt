@@ -21,6 +21,7 @@ httpx==0.23.0; python_version >= "3.7"
 hyperframe==6.0.1; python_version >= "3.7" and python_full_version >= "3.6.1" and python_version < "4.0"
 idna==3.3
 limits==1.6; python_version >= "3.7" and python_version < "4.0"
+loguru==0.6.0; python_version >= "3.5"
 msgpack==1.0.4
 orjson==3.8.0; python_version >= "3.7"
 packaging==21.3; python_version >= "3.6"
@@ -43,4 +44,5 @@ uvicorn==0.18.3; python_version >= "3.7"
 uvloop==0.16.0; sys_platform != "win32" and sys_platform != "cygwin" and platform_python_implementation != "PyPy" and python_version >= "3.7" and python_version < "4.0"
 watchfiles==0.16.1; python_version >= "3.7" and python_version < "4.0"
 websockets==10.3; python_version >= "3.7" and python_version < "4.0"
+win32-setctime==1.1.0; sys_platform == "win32" and python_version >= "3.5"
 wrapt==1.14.1; python_version >= "3.6" and python_full_version < "3.0.0" or python_full_version >= "3.5.0" and python_version >= "3.6"
