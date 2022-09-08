@@ -54,4 +54,4 @@ database = 1
 
 [app]
 
-repositories = ["TeamVanced/VancedMicroG", "revanced/revanced-cli", "revanced/revanced-patches", "revanced/revanced-integrations", "revanced/revanced-manager"]
+repositories = ["TeamVanced/VancedMicroG", "revanced/revanced-cli", "revanced/revanced-patches", "revanced/revanced-integrations", "revanced/revanced-manager", "revanced/revanced-patcher"]
