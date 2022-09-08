@@ -58,3 +58,6 @@ repositories = ["TeamVanced/VancedMicroG", "revanced/revanced-cli", "revanced/re
 
 [logging]
 
+level = "INFO"
+json_logs = false
+redis_database = 2
