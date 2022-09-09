@@ -36,20 +36,30 @@ class Releases:
         # Returns:
         #    dict: dictionary of filename and download url
         
-        assets = []
+        assets: list = []
         response = await self.httpx_client.get(f"https://api.github.com/repos/{repository}/releases/latest")
         
         if response.status_code == 200:
-            release_assets = response.json()['assets']
-    
-            for asset in release_assets:
-                assets.append({ 'repository': repository,
-                                'name': asset['name'],
-                                'size': asset['size'],
-                                'browser_download_url': asset['browser_download_url'],
-                                'content_type': asset['content_type']
-                                })
+            release_assets: dict = response.json()['assets']
+            release_version: str = response.json()['tag_name']
+            release_tarball: str = response.json()['tarball_url']
             
+            if release_assets:
+                for asset in release_assets:
+                    assets.append({ 'repository': repository,
+                                    'version': release_version,
+                                    'name': asset['name'],
+                                    'size': asset['size'],
+                                    'browser_download_url': asset['browser_download_url'],
+                                    'content_type': asset['content_type']
+                                    })
+            else:
+                assets.append({ 'repository': repository,
+                                'version': release_version,
+                                'name': f"{repository.split('/')[1]}-{release_version}.tar.gz",
+                                'browser_download_url': release_tarball,
+                                'content_type': 'application/gzip'
+                               })
         return assets
 
     async def get_latest_releases(self, repositories: list) -> dict:

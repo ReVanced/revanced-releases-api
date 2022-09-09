@@ -1,3 +1,4 @@
+from typing import Any
 from pydantic import BaseModel
 
 class ToolsResponseFields(BaseModel):
@@ -7,8 +8,9 @@ class ToolsResponseFields(BaseModel):
         BaseModel (pydantic.BaseModel): BaseModel from pydantic
     """
     repository: str
+    version: str
     name: str
-    size: str
+    size: str | None = None
     browser_download_url: str
     content_type: str
 class CompatiblePackagesResponseFields(BaseModel):
@@ -19,6 +21,14 @@ class CompatiblePackagesResponseFields(BaseModel):
     """
     name: str
     versions: list[ str ] | None
+
+class PatchesOptionsResponseFields(BaseModel):
+    key: str
+    title: str
+    description: str
+    required: bool
+    choices: list[ Any ] | None
+
 class PatchesResponseFields(BaseModel):
     """Implements the fields for the /patches endpoint.
     
@@ -29,7 +39,9 @@ class PatchesResponseFields(BaseModel):
     description: str
     version: str
     excluded: bool
+    deprecated: bool
     dependencies: list[ str ] | None
+    options: list[ PatchesOptionsResponseFields ] | None
     compatiblePackages: list[ CompatiblePackagesResponseFields ]
     
 class ContributorFields(BaseModel):

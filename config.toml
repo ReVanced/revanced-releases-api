@@ -28,7 +28,7 @@ The team also have a [Discord Server](https://revanced.app/discord) if you need 
 Godspeed 💀
 
 """
-version = "0.2 alpha"
+version = "0.3 alpha"
 
 [license]
 
@@ -54,7 +54,7 @@ database = 1
 
 [app]
 
-repositories = ["TeamVanced/VancedMicroG", "revanced/revanced-cli", "revanced/revanced-patches", "revanced/revanced-integrations", "revanced/revanced-manager"]
+repositories = ["TeamVanced/VancedMicroG", "revanced/revanced-cli", "revanced/revanced-patcher", "revanced/revanced-patches", "revanced/revanced-integrations", "revanced/revanced-manager"]
 
 [logging]
 
