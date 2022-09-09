@@ -2,7 +2,9 @@ import os
 import orjson
 import httpx_cache
 from base64 import b64decode
-from modules.InternalCache import InternalCache
+from modules.utils.InternalCache import InternalCache
+import modules.utils.Logger as Logger
+
 
 class Releases:
     
@@ -12,7 +14,17 @@ class Releases:
                'Authorization': "token " + os.environ['GITHUB_TOKEN']
                }
     
-    httpx_client = httpx_cache.AsyncClient(headers=headers, http2=True)
+    httpx_logger = Logger.HTTPXLogger()
+    
+    httpx_client = httpx_cache.AsyncClient(
+        headers=headers,
+        http2=True,
+        event_hooks={
+            'request': [httpx_logger.log_request],
+            'response': [httpx_logger.log_response]
+            }
+        )
+    
     InternalCache = InternalCache()
     
     async def _get_release(self, repository: str) -> list:
@@ -50,13 +62,14 @@ class Releases:
             dict: A dictionary containing assets from each repository
         """
         
-        releases: dict[str, list] = {}
-        releases['tools'] = []
+        releases: dict[str, list]
         
-        try:
-            cached_releases = await self.InternalCache.get("releases")
-            return cached_releases
-        except:
+        if await self.InternalCache.exists('releases'):
+            releases = await self.InternalCache.get('releases')
+        else:
+            releases = {}
+            releases['tools'] = []
+            
             for repository in repositories:
                 files = await self._get_release(repository)
                 if files:
@@ -84,10 +97,9 @@ class Releases:
         Returns:
             dict: Patches available for a given app
         """
-        try:
-            cached_patches = await self.InternalCache.get("patches")
-            return cached_patches
-        except:
+        if await self.InternalCache.exists('patches'):
+            patches = await self.InternalCache.get('patches')
+        else:
             patches = await self._get_patches_json()
             await self.InternalCache.store('patches', patches)
         
@@ -116,13 +128,13 @@ class Releases:
             dict: A dictionary containing the contributors from each repository
         """
         
-        contributors: dict[str, list] = {}
-        contributors['repositories'] = []
+        contributors: dict[str, list]
         
-        try:
-            cached_contributors = await self.InternalCache.get("contributors")
-            return cached_contributors
-        except:
+        if await self.InternalCache.exists('contributors'):
+            contributors = await self.InternalCache.get('contributors')
+        else:
+            contributors = {}
+            contributors['repositories'] = []
             for repository in repositories:
                 if 'revanced' in repository:
                     repo_contributors = await self._get_contributors(repository)

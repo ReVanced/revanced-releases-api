@@ -54,4 +54,10 @@ database = 1
 
 [app]
 
-repositories = ["TeamVanced/VancedMicroG", "revanced/revanced-cli", "revanced/revanced-patches", "revanced/revanced-integrations", "revanced/revanced-manager", "revanced/revanced-patcher"]
+repositories = ["TeamVanced/VancedMicroG", "revanced/revanced-cli", "revanced/revanced-patches", "revanced/revanced-integrations", "revanced/revanced-manager"]
+
+[logging]
+
+level = "INFO"
+json_logs = false
+redis_database = 2

@@ -19,6 +19,8 @@ from fastapi_cache.backends.redis import RedisBackend
 from modules.Releases import Releases
 import modules.models.ResponseModels as ResponseModels
 
+import modules.utils.Logger as Logger
+
 """Get latest ReVanced releases from GitHub API."""
 
 # Load config
@@ -121,6 +123,10 @@ async def startup() -> None:
     FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
     
     return None
+
+# setup right before running to make sure no other library overwrites it
+
+Logger.setup_logging(LOG_LEVEL=config["logging"]["level"], JSON_LOGS=config["logging"]["json_logs"])
 
 # Run app
 if __name__ == '__main__':
