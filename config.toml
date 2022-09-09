@@ -42,7 +42,7 @@ port = 8000
 
 [slowapi]
 
-limit = "15/sec"
+limit = "1000/minute"
 
 [cache]
 expire = 60
