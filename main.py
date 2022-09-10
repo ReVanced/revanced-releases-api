@@ -108,7 +108,7 @@ async def contributors(request: Request, response: Response) -> dict:
 
 @app.head('/ping', status_code=204)
 @limiter.limit(config['slowapi']['limit'])
-async def send_ping(request: Request, response: Response) -> None:
+async def ping(request: Request, response: Response) -> None:
     """Check if the API is running.
 
     Returns:

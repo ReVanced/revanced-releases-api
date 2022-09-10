@@ -43,11 +43,13 @@ class Releases:
             release_assets: dict = response.json()['assets']
             release_version: str = response.json()['tag_name']
             release_tarball: str = response.json()['tarball_url']
+            release_timestamp: str = response.json()['published_at']
             
             if release_assets:
                 for asset in release_assets:
                     assets.append({ 'repository': repository,
                                     'version': release_version,
+                                    'timestamp': asset['updated_at'],
                                     'name': asset['name'],
                                     'size': asset['size'],
                                     'browser_download_url': asset['browser_download_url'],
@@ -56,6 +58,7 @@ class Releases:
             else:
                 assets.append({ 'repository': repository,
                                 'version': release_version,
+                                'timestamp': release_timestamp,
                                 'name': f"{repository.split('/')[1]}-{release_version}.tar.gz",
                                 'browser_download_url': release_tarball,
                                 'content_type': 'application/gzip'

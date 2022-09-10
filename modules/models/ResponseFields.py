@@ -9,6 +9,7 @@ class ToolsResponseFields(BaseModel):
     """
     repository: str
     version: str
+    timestamp: str
     name: str
     size: str | None = None
     browser_download_url: str
