@@ -16,7 +16,7 @@ The team also have a [Discord Server](https://revanced.app/discord) if you need 
 
 ## Additional Information
 
-* Rate Limiting - 15 requests per minute
+* Rate Limiting - 60 requests per minute
 * Cache - 5 minutes
 
 ## Important Notes
@@ -28,7 +28,7 @@ The team also have a [Discord Server](https://revanced.app/discord) if you need 
 Godspeed 💀
 
 """
-version = "0.3 alpha"
+version = "0.10 beta"
 
 [license]
 
@@ -42,10 +42,10 @@ port = 8000
 
 [slowapi]
 
-limit = "1000/minute"
+limit = "60/minute"
 
 [cache]
-expire = 60
+expire = 120
 database = 0
 
 [internal-cache]
