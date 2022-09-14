@@ -4,6 +4,7 @@ import os
 import toml
 import uvicorn
 import aioredis
+import sentry_sdk
 
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import RedirectResponse
@@ -16,10 +17,22 @@ from fastapi_cache.decorator import cache
 from slowapi.errors import RateLimitExceeded
 from fastapi_cache.backends.redis import RedisBackend
 
+from sentry_sdk.integrations.redis import RedisIntegration
+from sentry_sdk.integrations.httpx import HttpxIntegration
+from sentry_sdk.integrations.gnu_backtrace import GnuBacktraceIntegration
+
 from modules.Releases import Releases
 import modules.models.ResponseModels as ResponseModels
 
 import modules.utils.Logger as Logger
+
+# Enable sentry logging
+
+sentry_sdk.init(os.environ['SENTRY_DSN'], traces_sample_rate=1.0, integrations=[
+        RedisIntegration(),
+        HttpxIntegration(),
+        GnuBacktraceIntegration(),
+    ],)
 
 """Get latest ReVanced releases from GitHub API."""
 

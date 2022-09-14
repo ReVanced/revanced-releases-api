@@ -19,6 +19,7 @@ aioredis = {version = ">=2.0.1", extras = ["hiredis"]}
 redis = ">=4.3.4"
 msgpack = ">=1.0.4"
 loguru = ">=0.6.0"
+sentry-sdk = ">=1.9.8"
 
 [tool.poetry.dev-dependencies]
 fastapi = ">=0.82.0"
@@ -35,6 +36,7 @@ msgpack = ">=1.0.4"
 mypy = ">=0.971"
 types-toml = ">=0.10.8"
 loguru = ">=0.6.0"
+sentry-sdk = ">=1.9.8"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

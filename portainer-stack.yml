@@ -24,6 +24,7 @@ services:
       - UVICORN_HOST=0.0.0.0
       - UVICORN_PORT=8000
       - UVICORN_LOG_LEVEL=debug
+      - SENTRY_DSN=YOUR_SENTRY_DSN
     ports:
       - 127.0.0.1:7934:8000
     networks:
