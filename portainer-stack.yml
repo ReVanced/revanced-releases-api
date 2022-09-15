@@ -16,7 +16,7 @@ services:
     restart: always
   revanced-releases-api:
     container_name: revanced-releases-api
-    image: alexandreteles/revanced-releases-api:latest
+    image: ghcr.io/alexandreteles/revanced-releases-api:latest
     environment:
       - GITHUB_TOKEN=YOUR_GITHUB_TOKEN
       - REDIS_URL=revanced-releases-api-redis
