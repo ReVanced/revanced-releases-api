@@ -60,7 +60,6 @@ jobs:
           flavor: |
             latest=${{ startsWith(github.ref, 'refs/heads/main') }}
             suffix=-${{ github.sha }}
-            separator=-
 
       - name: Build and push Docker image
         id: build
