@@ -63,5 +63,6 @@ jobs:
           file: ./varnish/Dockerfile
           platforms: linux/amd64,linux/arm64/v8
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: varnish-cache.org=${{ steps.meta.outputs.labels }}
+          tags: |
+            type=raw, value=varnish-revanced-releases-api
+          labels: ${{ steps.meta.outputs.labels }}
