@@ -53,6 +53,7 @@ jobs:
           flavor: |
             latest=${{ startsWith(github.ref, 'refs/heads/main') }}
             suffix=-${{ github.sha }}
+          tags: |
 
       - name: Build and push Docker image
         id: build
@@ -63,6 +64,5 @@ jobs:
           file: ./varnish/Dockerfile
           platforms: linux/amd64,linux/arm64/v8
           push: true
-          tags: |
-            type=raw, value=varnish-revanced-releases-api
+          tags: varnish-revanced-releases:latest
           labels: ${{ steps.meta.outputs.labels }}
