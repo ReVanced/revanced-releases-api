@@ -7,7 +7,7 @@ license = "AGPLv3"
 
 [tool.poetry.dependencies]
 python = "^3.10"
-fastapi = ">=0.82.0"
+fastapi = ">=0.85.0"
 uvicorn = {version = ">=0.18.3", extras = ["standard"]}
 httpx = {version = ">=0.23.0", extras = ["http2"]}
 httpx-cache = ">=0.6.0"
@@ -22,7 +22,7 @@ loguru = ">=0.6.0"
 sentry-sdk = ">=1.9.8"
 
 [tool.poetry.dev-dependencies]
-fastapi = ">=0.82.0"
+fastapi = ">=0.85.0"
 uvicorn = {version = ">=0.18.3", extras = ["standard"]}
 httpx = {version = ">=0.23.0", extras = ["http2"]}
 httpx-cache = ">=0.6.0"
