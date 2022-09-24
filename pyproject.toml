@@ -15,11 +15,10 @@ toml = ">=0.10.2"
 slowapi = ">=0.1.6"
 orjson = ">=3.8.0"
 fastapi-cache2 = ">=0.1.9"
-aioredis = {version = ">=2.0.1", extras = ["hiredis"]}
 redis = ">=4.3.4"
-msgpack = ">=1.0.4"
 loguru = ">=0.6.0"
 sentry-sdk = ">=1.9.8"
+argon2-cffi = ">=21.3.0"
 
 [tool.poetry.dev-dependencies]
 fastapi = ">=0.85.0"
@@ -30,13 +29,12 @@ toml = ">=0.10.2"
 slowapi = ">=0.1.6"
 orjson = ">=3.8.0"
 fastapi-cache2 = ">=0.1.9"
-aioredis = {version = ">=2.0.1", extras = ["hiredis"]}
 redis = ">=4.3.4"
-msgpack = ">=1.0.4"
 mypy = ">=0.971"
 types-toml = ">=0.10.8"
 loguru = ">=0.6.0"
 sentry-sdk = ">=1.9.8"
+argon2-cffi = ">=21.3.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

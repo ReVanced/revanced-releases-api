@@ -1,55 +1,59 @@
 import os
 import toml
-import orjson
-import msgpack
-import aioredis
+from typing import Any
+from redis import asyncio as aioredis
 
 import modules.utils.Logger as Logger
-
-# Load config
+from modules.utils.RedisConnector import RedisConnector
 
 config: dict = toml.load("config.toml")
-
-# Redis connection parameters
-
-redis_config: dict[ str, str | int ] = {
-    "url": f"redis://{os.environ['REDIS_URL']}",
-    "port": os.environ['REDIS_PORT'],
-    "database": config['internal-cache']['database'],
-}
 
 class InternalCache:
     """Implements an internal cache for ReVanced Releases API."""
     
-    redis_url = f"{redis_config['url']}:{redis_config['port']}/{redis_config['database']}"
-    redis = aioredis.from_url(redis_url, encoding="utf-8", decode_responses=True)
+    redis_connector = RedisConnector(config['internal-cache']['database'])
+    
+    redis = redis_connector.connect()
     
     InternalCacheLogger = Logger.InternalCacheLogger()
         
     async def store(self, key: str, value: dict) -> None:
+        """Stores a key-value pair in the cache.
+
+        Args:
+            key (str): the key to store
+            value (dict): the JSON value to store
+        """
         try:
-            await self.redis.set(key, orjson.dumps(value), ex=config['internal-cache']['expire'])
+            await self.redis.json().set(key, '$', value)
+            await self.redis.expire(key, config['internal-cache']['expire'])
             await self.InternalCacheLogger.log("SET", None, key)
         except aioredis.RedisError as e:
             await self.InternalCacheLogger.log("SET", e)
         
     async def delete(self, key: str) -> None:
+        """Removes a key-value pair from the cache.
+
+        Args:
+            key (str): the key to delete
+        """
         try:
             await self.redis.delete(key)
             await self.InternalCacheLogger.log("DEL", None, key)
         except aioredis.RedisError as e:
             await self.InternalCacheLogger.log("DEL", e)
         
-    async def update(self, key: str, value: dict) -> None:
-        try:
-            await self.redis.set(key, orjson.dumps(value), ex=config['internal-cache']['expire'])
-            await self.InternalCacheLogger.log("SET", None, key)
-        except aioredis.RedisError as e:
-            await self.InternalCacheLogger.log("SET", e)
-        
     async def get(self, key: str) -> dict:
+        """Gets a key-value pair from the cache.
+
+        Args:
+            key (str): the key to retrieve
+
+        Returns:
+            dict: the JSON value stored in the cache or an empty dict if key doesn't exist or an error occurred
+        """
         try:
-            payload = orjson.loads(await self.redis.get(key))
+            payload: dict[Any, Any] = await self.redis.json().get(key)
             await self.InternalCacheLogger.log("GET", None, key)
             return payload
         except aioredis.RedisError as e:
@@ -57,6 +61,14 @@ class InternalCache:
             return {}
     
     async def exists(self, key: str) -> bool:
+        """Checks if a key exists in the cache.
+
+        Args:
+            key (str): key to check
+
+        Returns:
+            bool: True if key exists, False if key doesn't exist or an error occurred
+        """
         try:
             if await self.redis.exists(key):
                 await self.InternalCacheLogger.log("EXISTS", None, key)

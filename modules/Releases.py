@@ -1,33 +1,19 @@
 import os
 import orjson
-import httpx_cache
 from base64 import b64decode
+from modules.utils.HTTPXClient import HTTPXClient
 from modules.utils.InternalCache import InternalCache
-import modules.utils.Logger as Logger
 
 
 class Releases:
     
     """Implements the methods required to get the latest releases and patches from revanced repositories."""
-
-    headers = {'Accept': "application/vnd.github+json",
-               'Authorization': "token " + os.environ['GITHUB_TOKEN']
-               }
-    
-    httpx_logger = Logger.HTTPXLogger()
-    
-    httpx_client = httpx_cache.AsyncClient(
-        headers=headers,
-        http2=True,
-        event_hooks={
-            'request': [httpx_logger.log_request],
-            'response': [httpx_logger.log_response]
-            }
-        )
+ 
+    httpx_client = HTTPXClient.create()
     
     InternalCache = InternalCache()
     
-    async def _get_release(self, repository: str) -> list:
+    async def __get_release(self, repository: str) -> list:
         # Get assets from latest release in a given repository.
         #
         # Args:
@@ -84,7 +70,7 @@ class Releases:
             releases['tools'] = []
             
             for repository in repositories:
-                files = await self._get_release(repository)
+                files = await self.__get_release(repository)
                 if files:
                     for file in files:
                         releases['tools'].append(file)
@@ -92,7 +78,7 @@ class Releases:
         
         return releases
     
-    async def _get_patches_json(self) -> dict:
+    async def __get_patches_json(self) -> dict:
         # Get revanced-patches repository's README.md.
         #
         # Returns:
@@ -113,12 +99,12 @@ class Releases:
         if await self.InternalCache.exists('patches'):
             patches = await self.InternalCache.get('patches')
         else:
-            patches = await self._get_patches_json()
+            patches = await self.__get_patches_json()
             await self.InternalCache.store('patches', patches)
         
         return patches
 
-    async def _get_contributors(self, repository: str) -> list:
+    async def __get_contributors(self, repository: str) -> list:
         # Get contributors from a given repository.
         #
         # Args:
@@ -150,7 +136,7 @@ class Releases:
             contributors['repositories'] = []
             for repository in repositories:
                 if 'revanced' in repository:
-                    repo_contributors = await self._get_contributors(repository)
+                    repo_contributors = await self.__get_contributors(repository)
                     data = { 'name': repository, 'contributors': repo_contributors }
                     contributors['repositories'].append(data)
             await self.InternalCache.store('contributors', contributors)

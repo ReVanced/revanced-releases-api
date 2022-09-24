@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
 
-import os
 import toml
 import uvicorn
-import aioredis
 import sentry_sdk
 
-from fastapi import FastAPI, Request, Response
-from fastapi.responses import RedirectResponse
+from fastapi import FastAPI, Request, Response, status
+from fastapi.responses import RedirectResponse, JSONResponse
 
 from slowapi.util import get_remote_address
 from slowapi import Limiter, _rate_limit_exceeded_handler
@@ -22,17 +20,22 @@ from sentry_sdk.integrations.httpx import HttpxIntegration
 from sentry_sdk.integrations.gnu_backtrace import GnuBacktraceIntegration
 
 from modules.Releases import Releases
+from modules.Client import Client
+
+from modules.utils.Generators import Generators
+from modules.utils.RedisConnector import RedisConnector
 import modules.models.ResponseModels as ResponseModels
+import modules.models.ClientModels as ClientModels
 
 import modules.utils.Logger as Logger
 
 # Enable sentry logging
 
-sentry_sdk.init(os.environ['SENTRY_DSN'], traces_sample_rate=1.0, integrations=[
-        RedisIntegration(),
-        HttpxIntegration(),
-        GnuBacktraceIntegration(),
-    ],)
+# sentry_sdk.init(os.environ['SENTRY_DSN'], traces_sample_rate=1.0, integrations=[
+#         RedisIntegration(),
+#         HttpxIntegration(),
+#         GnuBacktraceIntegration(),
+#     ],)
 
 """Get latest ReVanced releases from GitHub API."""
 
@@ -40,17 +43,13 @@ sentry_sdk.init(os.environ['SENTRY_DSN'], traces_sample_rate=1.0, integrations=[
 
 config: dict = toml.load("config.toml")
 
-# Redis connection parameters
-
-redis_config: dict[ str, str | int ] = {
-    "url": f"redis://{os.environ['REDIS_URL']}",
-    "port": os.environ['REDIS_PORT'],
-    "database": config['cache']['database'],
-}
-
-# Create releases instance
+# Create releases, client and generators instances
 
 releases = Releases()
+
+client = Client()
+
+generators = Generators()
 
 # Create FastAPI instance
 
@@ -75,7 +74,7 @@ async def get_cache() -> int:
 
 # Routes
 
-@app.get("/", response_class=RedirectResponse, status_code=301)
+@app.get("/", response_class=RedirectResponse, status_code=status.HTTP_301_MOVED_PERMANENTLY, tags=['Root'])
 @limiter.limit(config['slowapi']['limit'])
 async def root(request: Request, response: Response) -> RedirectResponse:
     """Brings up API documentation
@@ -85,7 +84,7 @@ async def root(request: Request, response: Response) -> RedirectResponse:
     """
     return RedirectResponse(url="/docs")
 
-@app.get('/tools', response_model=ResponseModels.ToolsResponseModel)
+@app.get('/tools', response_model=ResponseModels.ToolsResponseModel, tags=['ReVanced Tools'])
 @limiter.limit(config['slowapi']['limit'])
 @cache(config['cache']['expire'])
 async def tools(request: Request, response: Response) -> dict:
@@ -96,7 +95,7 @@ async def tools(request: Request, response: Response) -> dict:
     """
     return await releases.get_latest_releases(config['app']['repositories'])
 
-@app.get('/patches', response_model=ResponseModels.PatchesResponseModel)
+@app.get('/patches', response_model=ResponseModels.PatchesResponseModel, tags=['ReVanced Tools'])
 @limiter.limit(config['slowapi']['limit'])
 @cache(config['cache']['expire'])
 async def patches(request: Request, response: Response) -> dict:
@@ -108,7 +107,7 @@ async def patches(request: Request, response: Response) -> dict:
     
     return await releases.get_patches_json()
 
-@app.get('/contributors', response_model=ResponseModels.ContributorsResponseModel)
+@app.get('/contributors', response_model=ResponseModels.ContributorsResponseModel, tags=['ReVanced Tools'])
 @limiter.limit(config['slowapi']['limit'])
 @cache(config['cache']['expire'])
 async def contributors(request: Request, response: Response) -> dict:
@@ -119,7 +118,88 @@ async def contributors(request: Request, response: Response) -> dict:
     """
     return await releases.get_contributors(config['app']['repositories'])
 
-@app.head('/ping', status_code=204)
+@app.post('/client/create', response_model=ClientModels.ClientModel, status_code=status.HTTP_201_CREATED, tags=['Clients'])
+@limiter.limit(config['slowapi']['limit'])
+async def create_client(request: Request, response: Response, admin: bool | None = False) -> ClientModels.ClientModel | dict:
+    """Create a new API client.
+
+    Returns:
+        json: client information
+    """
+    new_client =  await client.generate(admin=admin)
+    try:
+        await client.store(new_client)
+    except Exception as e:
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return {"error": "Internal server error",
+                "message": "Database error"}
+    return new_client
+
+@app.delete('/client/{client_id}', response_model=ClientModels.ClientDeleted, status_code=status.HTTP_200_OK, tags=['Clients'])
+@limiter.limit(config['slowapi']['limit'])
+async def delete_client(request: Request, response: Response, client_id: str = None, responses={
+    500: {"model: ClientModels.InternalServerError"},
+    404: {"model: ClientModels.ClientNotFound"},
+    400: {"model: ClientModels.ClientIdNotProvided"}
+    }
+                       ) -> dict | JSONResponse:
+    """Delete an API client.
+
+    Returns:
+        json: deletion status
+    """
+    
+    if not client_id:
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        return {"error": "Bad request",
+                "message": "Missing client id"}
+        
+    if await client.exists(client_id):
+        try:
+            deleted = await client.delete(client_id)
+        except Exception as e:
+            response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+            return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content={"error": "Internal server error"})
+        return {"id": client_id, "deleted": deleted}
+    else:
+        response.status_code = status.HTTP_404_NOT_FOUND
+        return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content={"error": "Client not found"})
+
+@app.patch('/client/{client_id}', response_model=ClientModels.ClientSecret, status_code=status.HTTP_200_OK, tags=['Clients'])
+@limiter.limit(config['slowapi']['limit'])
+async def update_client(request: Request, response: Response, client_id: str = None, responses={
+    500: {"model: ClientModels.InternalServerError"},
+    404: {"model: ClientModels.ClientNotFound"},
+    400: {"model: ClientModels.ClientIdNotProvided"}
+    }
+                       ) -> dict | JSONResponse:
+    """Update an API client's secret.
+
+    Returns:
+        json: client ID and secret
+    """
+    if not client_id:
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        return {"error": "Bad request",
+                "message": "Missing client id"}
+        
+    if await client.exists(client_id):
+        try:
+            new_secret = await generators.generate_secret()
+            updated = await client.update_secret(client_id, new_secret)
+        except Exception as e:
+            response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+            return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content={"error": "Internal server error"})
+        if updated:
+            return {"id": client_id, "new_secret": new_secret}
+        else:
+            response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+            return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content={"error": "Internal server error"})
+    else:
+        response.status_code = status.HTTP_404_NOT_FOUND
+        return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content={"error": "Client not found"})
+
+@app.head('/ping', status_code=status.HTTP_204_NO_CONTENT, tags=['Misc'])
 @limiter.limit(config['slowapi']['limit'])
 async def ping(request: Request, response: Response) -> None:
     """Check if the API is running.
@@ -131,9 +211,8 @@ async def ping(request: Request, response: Response) -> None:
 
 @app.on_event("startup")
 async def startup() -> None:
-    redis_url = f"{redis_config['url']}:{redis_config['port']}/{redis_config['database']}"
-    redis =  aioredis.from_url(redis_url, encoding="utf8", decode_responses=True)
-    FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
+    redis_connector = RedisConnector(config['cache']['database'])
+    FastAPICache.init(RedisBackend(redis_connector.connect()), prefix="fastapi-cache")
     
     return None
 

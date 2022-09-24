@@ -8,18 +8,12 @@ Changelogs are not included but can be found on the [ReVanced Repositories](http
 
 The team also have a [Discord Server](https://revanced.app/discord) if you need help.
 
-## API Endpoints
-
-* [tools](/tools) - Returns the latest version of all ReVanced tools and Vanced MicroG
-* [patches](/patches) - Returns the latest version of all ReVanced patches
-* [contributors](/contributors) - Returns contributors for all ReVanced projects
-
-## Additional Information
+## Important Information
 
 * Rate Limiting - 60 requests per minute
 * Cache - 5 minutes
 
-## Important Notes
+## Additional Notes
 
 1. Although we will try to avoid breaking changes, we can't guarantee that it won't happen.
 2. Okay, the api is now cached and rate limited (per endpoint). But please don't abuse it, we don't want to have to block you.
@@ -28,7 +22,7 @@ The team also have a [Discord Server](https://revanced.app/discord) if you need 
 Godspeed 💀
 
 """
-version = "0.10 beta"
+version = "0.5.2 beta"
 
 [license]
 
@@ -44,6 +38,11 @@ port = 8000
 
 limit = "60/minute"
 
+[logging]
+
+level = "INFO"
+json_logs = false
+
 [cache]
 expire = 120
 database = 0
@@ -52,12 +51,16 @@ database = 0
 expire = 300
 database = 1
 
+[clients]
+database = 2
+
+[tokens]
+database = 3
+
+[announcements]
+database = 4
+
 [app]
 
 repositories = ["TeamVanced/VancedMicroG", "revanced/revanced-cli", "revanced/revanced-patcher", "revanced/revanced-patches", "revanced/revanced-integrations", "revanced/revanced-manager"]
 
-[logging]
-
-level = "INFO"
-json_logs = false
-redis_database = 2
