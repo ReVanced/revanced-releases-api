@@ -94,6 +94,18 @@ class UserLogger:
         else:
             logger.info(f"[User] REDIS {operation} {key} - OK")
 
+class AnnouncementsLogger:
+    async def log(self, operation: str, result: RedisError | None = None, key: str = "") -> None:
+        """Logs internal cache operations
+        
+        Args:
+            operation (str): Operation name
+            key (str): Key used in the operation
+        """
+        if type(result) is RedisError:
+            logger.error(f"[User] REDIS {operation} - Failed with error: {result}")
+        else:
+            logger.info(f"[User] REDIS {operation} {key} - OK")
 
 def setup_logging(LOG_LEVEL: str, JSON_LOGS: bool) -> None:
     

@@ -10,13 +10,11 @@ from modules.utils.RedisConnector import RedisConnector
 
 config: dict = toml.load("config.toml")
 
-class Client:
+class Clients:
     
     """Implements a client for ReVanced Releases API."""
     
-    redis_connector = RedisConnector(config['clients']['database'])
-    
-    redis = redis_connector.connect()
+    redis = RedisConnector.connect(config['clients']['database'])
     
     UserLogger = Logger.UserLogger()
     
@@ -94,7 +92,7 @@ class Client:
             ClientModel | bool: Pydantic model of the client or False if the client doesn't exist
         """
         
-        if self.exists(client_id):
+        if await self.exists(client_id):
             try:
                 client_payload: dict[str, str | bool] = await self.redis.json().get(client_id)
                 client = ClientModel(id=client_id, secret=client_payload['secret'], admin=client_payload['admin'])
@@ -116,7 +114,7 @@ class Client:
             bool: True if the client was deleted successfully, False otherwise
         """
         
-        if self.exists(client_id):
+        if await self.exists(client_id):
             try:
                 await self.redis.delete(client_id)
                 await self.UserLogger.log("DELETE", None, client_id)

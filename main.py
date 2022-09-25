@@ -20,12 +20,16 @@ from sentry_sdk.integrations.httpx import HttpxIntegration
 from sentry_sdk.integrations.gnu_backtrace import GnuBacktraceIntegration
 
 from modules.Releases import Releases
-from modules.Client import Client
+from modules.Clients import Clients
+from modules.Announcements import Announcements
 
 from modules.utils.Generators import Generators
 from modules.utils.RedisConnector import RedisConnector
-import modules.models.ResponseModels as ResponseModels
+
 import modules.models.ClientModels as ClientModels
+import modules.models.GeneralErrors as GeneralErrors
+import modules.models.ResponseModels as ResponseModels
+import modules.models.AnnouncementModels as AnnouncementModels
 
 import modules.utils.Logger as Logger
 
@@ -43,13 +47,15 @@ import modules.utils.Logger as Logger
 
 config: dict = toml.load("config.toml")
 
-# Create releases, client and generators instances
+# Class instances
+
+generators = Generators()
 
 releases = Releases()
 
-client = Client()
+clients = Clients()
 
-generators = Generators()
+announcements = Announcements()
 
 # Create FastAPI instance
 
@@ -118,7 +124,7 @@ async def contributors(request: Request, response: Response) -> dict:
     """
     return await releases.get_contributors(config['app']['repositories'])
 
-@app.post('/client/create', response_model=ClientModels.ClientModel, status_code=status.HTTP_201_CREATED, tags=['Clients'])
+@app.post('/client', response_model=ClientModels.ClientModel, status_code=status.HTTP_201_CREATED, tags=['Clients'])
 @limiter.limit(config['slowapi']['limit'])
 async def create_client(request: Request, response: Response, admin: bool | None = False) -> ClientModels.ClientModel | dict:
     """Create a new API client.
@@ -126,9 +132,9 @@ async def create_client(request: Request, response: Response, admin: bool | None
     Returns:
         json: client information
     """
-    new_client =  await client.generate(admin=admin)
+    new_client =  await clients.generate(admin=admin)
     try:
-        await client.store(new_client)
+        await clients.store(new_client)
     except Exception as e:
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         return {"error": "Internal server error",
@@ -138,9 +144,9 @@ async def create_client(request: Request, response: Response, admin: bool | None
 @app.delete('/client/{client_id}', response_model=ClientModels.ClientDeleted, status_code=status.HTTP_200_OK, tags=['Clients'])
 @limiter.limit(config['slowapi']['limit'])
 async def delete_client(request: Request, response: Response, client_id: str = None, responses={
-    500: {"model: ClientModels.InternalServerError"},
-    404: {"model: ClientModels.ClientNotFound"},
-    400: {"model: ClientModels.ClientIdNotProvided"}
+    500: {"model: GeneralErrors.InternalServerError"},
+    404: {"model: GeneralErrors.ItemNotFound"},
+    400: {"model: GeneralErrors.IdNotProvided"}
     }
                        ) -> dict | JSONResponse:
     """Delete an API client.
@@ -154,9 +160,9 @@ async def delete_client(request: Request, response: Response, client_id: str = N
         return {"error": "Bad request",
                 "message": "Missing client id"}
         
-    if await client.exists(client_id):
+    if await clients.exists(client_id):
         try:
-            deleted = await client.delete(client_id)
+            deleted = await clients.delete(client_id)
         except Exception as e:
             response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
             return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content={"error": "Internal server error"})
@@ -168,9 +174,9 @@ async def delete_client(request: Request, response: Response, client_id: str = N
 @app.patch('/client/{client_id}', response_model=ClientModels.ClientSecret, status_code=status.HTTP_200_OK, tags=['Clients'])
 @limiter.limit(config['slowapi']['limit'])
 async def update_client(request: Request, response: Response, client_id: str = None, responses={
-    500: {"model: ClientModels.InternalServerError"},
-    404: {"model: ClientModels.ClientNotFound"},
-    400: {"model: ClientModels.ClientIdNotProvided"}
+    500: {"model: GeneralErrors.InternalServerError"},
+    404: {"model: GeneralErrors.ItemNotFound"},
+    400: {"model: GeneralErrors.IdNotProvided"}
     }
                        ) -> dict | JSONResponse:
     """Update an API client's secret.
@@ -183,10 +189,10 @@ async def update_client(request: Request, response: Response, client_id: str = N
         return {"error": "Bad request",
                 "message": "Missing client id"}
         
-    if await client.exists(client_id):
+    if await clients.exists(client_id):
         try:
             new_secret = await generators.generate_secret()
-            updated = await client.update_secret(client_id, new_secret)
+            updated = await clients.update_secret(client_id, new_secret)
         except Exception as e:
             response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
             return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content={"error": "Internal server error"})
@@ -195,6 +201,86 @@ async def update_client(request: Request, response: Response, client_id: str = N
         else:
             response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
             return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content={"error": "Internal server error"})
+    else:
+        response.status_code = status.HTTP_404_NOT_FOUND
+        return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content={"error": "Not found", "id": client_id})
+
+@app.put('/announcement', response_model=AnnouncementModels.AnnouncementCreatedResponse, status_code=status.HTTP_200_OK, tags=['Announcements'])
+@limiter.limit(config['slowapi']['limit'])
+async def create_announcement(request: Request, response: Response, announcement: AnnouncementModels.AnnouncementCreateModel, responses={
+    500: {"model: GeneralErrors.InternalServerError"},
+    }
+                              ) -> dict | JSONResponse:
+    """Create a new announcement.
+
+    Returns:
+        json: announcement information
+    """
+    try:
+        announcement_id: str | bool = await announcements.store(announcement)
+    except Exception as e:
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content={"error": "Internal server error"})
+    return {"id": announcement_id}
+
+@app.get('/announcement/{announcement_id}', response_model=AnnouncementModels.AnnouncementModel, tags=['Announcements'])
+@limiter.limit(config['slowapi']['limit'])
+async def get_announcement(request: Request, response: Response, announcement_id: str = None, responses={
+    500: {"model: GeneralErrors.InternalServerError"},
+    404: {"model: GeneralErrors.ItemNotFound"},
+    400: {"model: GeneralErrors.IdNotProvided"}
+    }
+                          ) -> JSONResponse | dict:
+    """Get an announcement.
+
+    Returns:
+        json: announcement information
+    """
+    if not announcement_id:
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        return {"error": "Bad request",
+                "message": "Missing announcement id"}
+        
+    if await announcements.exists(announcement_id):
+        try:
+            announcement = await announcements.get(announcement_id)
+        except Exception as e:
+            response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+            return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content={"error": "Internal server error"})
+        if not announcement:
+            response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+            return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content={"error": "Internal server error"})
+    else:
+        response.status_code = status.HTTP_404_NOT_FOUND
+        return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content={"error": "Not found", "id": announcement_id})
+    return announcement
+
+@app.delete('/announcement/{announcement_id}', response_model=AnnouncementModels.AnnouncementDeleted, status_code=status.HTTP_200_OK, tags=['Announcements'])
+@limiter.limit(config['slowapi']['limit'])
+async def delete_announcement(request: Request, response: Response, announcement_id: str = None, responses={
+    500: {"model: GeneralErrors.InternalServerError"},
+    404: {"model: GeneralErrors.ItemNotFound"},
+    400: {"model: GeneralErrors.IdNotProvided"}
+    }
+                       ) -> dict | JSONResponse:
+    """Delete an announcement.
+
+    Returns:
+        json: deletion status
+    """
+    
+    if not announcement_id:
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        return {"error": "Bad request",
+                "message": "Missing announcement id"}
+        
+    if await announcements.exists(announcement_id):
+        try:
+            deleted = await announcements.delete(announcement_id)
+        except Exception as e:
+            response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+            return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content={"error": "Internal server error"})
+        return {"id": announcement_id, "deleted": deleted}
     else:
         response.status_code = status.HTTP_404_NOT_FOUND
         return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content={"error": "Client not found"})
@@ -211,8 +297,7 @@ async def ping(request: Request, response: Response) -> None:
 
 @app.on_event("startup")
 async def startup() -> None:
-    redis_connector = RedisConnector(config['cache']['database'])
-    FastAPICache.init(RedisBackend(redis_connector.connect()), prefix="fastapi-cache")
+    FastAPICache.init(RedisBackend(RedisConnector.connect(config['cache']['database'])), prefix="fastapi-cache")
     
     return None
 

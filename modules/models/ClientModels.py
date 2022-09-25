@@ -1,6 +1,4 @@
 from pydantic import BaseModel
-
-
 class ClientModel(BaseModel):
     """Implements the fields for the clients.
 
@@ -31,3 +29,4 @@ class ClientSecret(BaseModel):
     
     id: str
     new_secret: str
+    

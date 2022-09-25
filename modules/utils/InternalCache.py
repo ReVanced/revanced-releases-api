@@ -11,9 +11,7 @@ config: dict = toml.load("config.toml")
 class InternalCache:
     """Implements an internal cache for ReVanced Releases API."""
     
-    redis_connector = RedisConnector(config['internal-cache']['database'])
-    
-    redis = redis_connector.connect()
+    redis = RedisConnector.connect(config['internal-cache']['database'])
     
     InternalCacheLogger = Logger.InternalCacheLogger()
         

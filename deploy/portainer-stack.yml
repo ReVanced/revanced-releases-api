@@ -1,16 +1,14 @@
 ---
 version: "3.8"
 
-volumes:
-  redis-data:
-    driver: local
-
 services:
   redis:
     container_name: revanced-releases-api-redis
-    image: redis:latest
+    image: redis-stack-server:latest
+    environment:
+      - REDIS_ARGS=--save 60 1 --appendonly yes
     volumes:
-      - redis-data:/data
+      - /data/redis/revanced-releases-api:/data
     networks:
       - infra
     restart: always
