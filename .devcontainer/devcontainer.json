@@ -39,7 +39,27 @@
 			"extensions": [
 				"ms-python.python",
 				"ms-python.vscode-pylance",
-                "eamodio.gitlens"
+                "eamodio.gitlens",
+                "nimda.deepdark-material",
+                "jeff-hykin.better-dockerfile-syntax",
+                "njpwerner.autodocstring",
+                "wwm.better-align",
+                "me-dutour-mathieu.vscode-github-actions",
+                "github.copilot-nightly",
+                "visualstudioexptteam.vsco",
+                "visualstudioexptteam.intellicode-api-usage-examples",
+                "zainchen.json",
+                "matangover.mypy",
+                "ionutvmi.path-autocomplete",
+                "christian-kohler.path-intellisense",
+                "donjayamanne.python-extension-pack",
+                "ms-python.vscode-pylance",
+                "redhat.vscode-yaml",
+                "kevinrose.vsc-python-indent",
+                "kevinrose.vsc-python-indent",
+                "bungcip.better-toml",
+                "rangav.vscode-thunder-client",
+                "rohinivsenthil.postcode"
 			]
 		}
 	},
@@ -48,7 +68,9 @@
 	// "forwardPorts": [],
 
 	// Use 'postCreateCommand' to run commands after the container is created.
-	"postCreateCommand": "docker run -d --name redis-stack -p 6379:6379 -p 8001:8001 redis/redis-stack:latest",
+	"postCreateCommand": "./.devcontainer/postCreateCommand.sh",
+
+    "postStartCommand":  "docker run -d --name redis-stack -p 6379:6379 -p 8001:8001 redis/redis-stack:latest",
 
 	// Comment out to connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
 	"remoteUser": "vscode",
