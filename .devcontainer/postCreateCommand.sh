@@ -12,3 +12,11 @@ source ~/.profile
 printf "Installing poetry for the current user...\n"
 
 pipx install poetry
+
+printf "Starting Redis...\n"
+
+docker run -d --name redis-stack -p 6379:6379 -p 8001:8001 redis/redis-stack:latest
+
+printf "Installing dependencies...\n"
+
+poetry install --all-extras
