@@ -205,7 +205,7 @@ async def update_client(request: Request, response: Response, client_id: str = N
         response.status_code = status.HTTP_404_NOT_FOUND
         return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content={"error": "Not found", "id": client_id})
 
-@app.put('/announcement', response_model=AnnouncementModels.AnnouncementCreatedResponse, status_code=status.HTTP_200_OK, tags=['Announcements'])
+@app.post('/announcement', response_model=AnnouncementModels.AnnouncementCreatedResponse, status_code=status.HTTP_200_OK, tags=['Announcements'])
 @limiter.limit(config['slowapi']['limit'])
 async def create_announcement(request: Request, response: Response, announcement: AnnouncementModels.AnnouncementCreateModel, responses={
     500: {"model: GeneralErrors.InternalServerError"},
@@ -217,11 +217,11 @@ async def create_announcement(request: Request, response: Response, announcement
         json: announcement information
     """
     try:
-        announcement_id: str | bool = await announcements.store(announcement)
+        announcement_created: bool = await announcements.store(announcement)
     except Exception as e:
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content={"error": "Internal server error"})
-    return {"id": announcement_id}
+    return {"created": announcement_created}
 
 @app.get('/announcement/{announcement_id}', response_model=AnnouncementModels.AnnouncementModel, tags=['Announcements'])
 @limiter.limit(config['slowapi']['limit'])

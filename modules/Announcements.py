@@ -17,7 +17,7 @@ class Announcements:
     
     generators = Generators()
     
-    async def store(self, announcement: AnnouncementCreateModel) -> str | bool:
+    async def store(self, announcement: AnnouncementCreateModel) -> bool:
         """Store an announcement in the database
 
         Args:
@@ -27,7 +27,7 @@ class Announcements:
             str | bool: UUID of the announcement or False if the announcement wasn't stored successfully
         """
         
-        announcement_id: str = await self.generators.generate_id()
+        announcement_id: str = "announcement"
         
         timestamp = await self.generators.generate_timestamp()
         
@@ -35,7 +35,8 @@ class Announcements:
         
         announcement_payload['created_at'] = timestamp
         announcement_payload['updated_at'] = timestamp
-        announcement_payload['owner'] = announcement.owner
+        announcement_payload['author'] = announcement.author
+        announcement_payload['type'] = announcement.type
         announcement_payload['title'] = announcement.title
         announcement_payload['content'] = announcement.content
         
@@ -46,49 +47,38 @@ class Announcements:
             await self.AnnouncementsLogger.log("SET", e)
             return False
         
-        return announcement_id
+        return True
     
-    async def exists(self, announcement_id: str) -> bool:
+    async def exists(self) -> bool:
         """Check if an announcement exists in the database
-
-        Args:
-            announcement_id (str): UUID of the announcement
 
         Returns:
             bool: True if the announcement exists, False otherwise
         """
         try:
-            if await self.redis.exists(announcement_id):
-                await self.AnnouncementsLogger.log("EXISTS", None, announcement_id)
+            if await self.redis.exists("announcement"):
+                await self.AnnouncementsLogger.log("EXISTS", None, "announcement")
                 return True
             else:
-                await self.AnnouncementsLogger.log("EXISTS", None, announcement_id)
+                await self.AnnouncementsLogger.log("EXISTS", None, "announcement")
                 return False
         except aioredis.RedisError as e:
             await self.AnnouncementsLogger.log("EXISTS", e)
             return False
     
-    async def get(self, announcement_id: str) -> dict:
+    async def get(self) -> dict:
         """Get a announcement from the database
-
-        Args:
-            announcement_id (str): UUID of the announcement
 
         Returns:
             dict: Dict of the announcement or an empty dict if the announcement doesn't exist
         """
         
-        if await self.exists(announcement_id):
-            await self.AnnouncementsLogger.log("EXISTS", None, announcement_id)
+        if await self.exists():
+            await self.AnnouncementsLogger.log("EXISTS", None, "announcement")
             try:
-                announcement: dict[str, str | int] = {}
-                announcement["id"] = announcement_id
+                announcement: dict[str, str | int] = await self.redis.json().get("announcement")
                 
-                announcement_payload: dict[str, str | int] = await self.redis.json().get(announcement_id)
-                
-                announcement |= announcement_payload
-                
-                await self.AnnouncementsLogger.log("GET", None, announcement_id)
+                await self.AnnouncementsLogger.log("GET", None, "announcement")
             except aioredis.RedisError as e:
                 await self.AnnouncementsLogger.log("GET", e)
                 return {}
@@ -96,20 +86,17 @@ class Announcements:
         else:
             return {}
         
-    async def delete(self, announcement_id: str) -> bool:
+    async def delete(self) -> bool:
         """Delete an announcement from the database
-
-        Args:
-            announcement_id (str): UUID of the announcement
 
         Returns:
             bool: True if the announcement was deleted successfully, False otherwise
         """
         
-        if await self.exists(announcement_id):
+        if await self.exists():
             try:
-                await self.redis.delete(announcement_id)
-                await self.AnnouncementsLogger.log("DELETE", None, announcement_id)
+                await self.redis.delete("announcement")
+                await self.AnnouncementsLogger.log("DELETE", None, "announcement")
             except aioredis.RedisError as e:
                 await self.AnnouncementsLogger.log("DELETE", e)
                 return False

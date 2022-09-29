@@ -1,4 +1,7 @@
 from pydantic import BaseModel
+from typing import Literal
+
+AnnouncementType = Literal["info", "warning", "error"]
 
 class AnnouncementModel(BaseModel):
     """Implements the fields for the announcements.
@@ -7,10 +10,10 @@ class AnnouncementModel(BaseModel):
         BaseModel (pydantic.BaseModel): BaseModel from pydantic
     """
     
-    id: str
     created_at: int
     updated_at: int
-    owner: str
+    author: str
+    type: AnnouncementType
     title: str
     content: str
     
@@ -21,7 +24,8 @@ class AnnouncementCreateModel(BaseModel):
         BaseModel (pydantic.BaseModel): BaseModel from pydantic
     """
     
-    owner: str
+    author: str
+    type: AnnouncementType
     title: str
     content: str
     
@@ -32,7 +36,7 @@ class AnnouncementCreatedResponse(BaseModel):
         BaseModel (pydantic.BaseModel): BaseModel from pydantic
     """
     
-    id: str
+    created: bool
     
 class AnnouncementDeleted(BaseModel):
     """Implements the response fields for deleted announcements.
