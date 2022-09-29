@@ -59,7 +59,8 @@
                 "rangav.vscode-thunder-client",
 				"kdcro101.vscode-redis",
 				"cweijan.vscode-database-client2",
-				"phu1237.vs-browser"
+				"phu1237.vs-browser",
+				"philnash.ngrok-for-vscode"
 			]
 		}
 	},
