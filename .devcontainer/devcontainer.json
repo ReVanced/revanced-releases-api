@@ -53,13 +53,13 @@
                 "ionutvmi.path-autocomplete",
                 "christian-kohler.path-intellisense",
                 "donjayamanne.python-extension-pack",
-                "ms-python.vscode-pylance",
                 "redhat.vscode-yaml",
-                "kevinrose.vsc-python-indent",
                 "kevinrose.vsc-python-indent",
                 "bungcip.better-toml",
                 "rangav.vscode-thunder-client",
-                "rohinivsenthil.postcode"
+				"kdcro101.vscode-redis",
+				"cweijan.vscode-database-client2",
+				"phu1237.vs-browser"
 			]
 		}
 	},
