@@ -18,9 +18,9 @@ services:
       - GITHUB_TOKEN=YOUR_GITHUB_TOKEN
       - REDIS_URL=revanced-releases-api-redis
       - REDIS_PORT=6379
-      - UVICORN_HOST=0.0.0.0
-      - UVICORN_PORT=8000
-      - UVICORN_LOG_LEVEL=debug
+      - HYPERCORN_HOST=0.0.0.0
+      - HYPERCORN_PORT=8000
+      - HYPERCORN_LOG_LEVEL=debug
       - SENTRY_DSN=YOUR_SENTRY_DSN
     ports:
       - 127.0.0.1:7934:8000

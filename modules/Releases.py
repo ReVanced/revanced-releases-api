@@ -1,4 +1,6 @@
-import os
+from toolz.dicttoolz import keyfilter
+import asyncio
+import uvloop
 import orjson
 from base64 import b64decode
 from modules.utils.HTTPXClient import HTTPXClient
@@ -8,6 +10,8 @@ from modules.utils.InternalCache import InternalCache
 class Releases:
     
     """Implements the methods required to get the latest releases and patches from revanced repositories."""
+    
+    uvloop.install()
  
     httpx_client = HTTPXClient.create()
     
@@ -69,11 +73,12 @@ class Releases:
             releases = {}
             releases['tools'] = []
             
-            for repository in repositories:
-                files = await self.__get_release(repository)
-                if files:
-                    for file in files:
-                        releases['tools'].append(file)
+            results: list = await asyncio.gather(*[self.__get_release(repository) for repository in repositories])
+            
+            for result in results:
+                for asset in result:
+                    releases['tools'].append(asset)
+                    
             await self.InternalCache.store('releases', releases)
         
         return releases
@@ -113,9 +118,14 @@ class Releases:
         # Returns:
         #    list: a list of dictionaries containing the repository's contributors
         
+        keep: set = {'login', 'avatar_url', 'html_url'}
+        
         response = await self.httpx_client.get(f"https://api.github.com/repos/{repository}/contributors")
         
-        return response.json()
+        contributors = [keyfilter(lambda k: k in keep, contributor) for contributor in response.json()]
+        
+        
+        return contributors
     
     async def get_contributors(self, repositories: list) -> dict:
         """Runs get_contributors() asynchronously for each repository.
@@ -134,11 +144,15 @@ class Releases:
         else:
             contributors = {}
             contributors['repositories'] = []
-            for repository in repositories:
-                if 'revanced' in repository:
-                    repo_contributors = await self.__get_contributors(repository)
-                    data = { 'name': repository, 'contributors': repo_contributors }
-                    contributors['repositories'].append(data)
+            
+            revanced_repositories = [repository for repository in repositories if 'revanced' in repository]
+            
+            results: list[dict] = await asyncio.gather(*[self.__get_contributors(repository) for repository in revanced_repositories])
+            
+            for key, value in zip(revanced_repositories, results):
+                data = { 'name': key, 'contributors': value }
+                contributors['repositories'].append(data)
+            
             await self.InternalCache.store('contributors', contributors)
         
         return contributors

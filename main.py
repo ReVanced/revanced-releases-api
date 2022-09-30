@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import toml
-import uvicorn
 import sentry_sdk
 
 from fastapi import FastAPI, Request, Response, status
@@ -223,9 +222,9 @@ async def create_announcement(request: Request, response: Response, announcement
         return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content={"error": "Internal server error"})
     return {"created": announcement_created}
 
-@app.get('/announcement/{announcement_id}', response_model=AnnouncementModels.AnnouncementModel, tags=['Announcements'])
+@app.get('/announcement/', response_model=AnnouncementModels.AnnouncementModel, tags=['Announcements'])
 @limiter.limit(config['slowapi']['limit'])
-async def get_announcement(request: Request, response: Response, announcement_id: str = None, responses={
+async def get_announcement(request: Request, response: Response, responses={
     500: {"model: GeneralErrors.InternalServerError"},
     404: {"model: GeneralErrors.ItemNotFound"},
     400: {"model: GeneralErrors.IdNotProvided"}
@@ -236,14 +235,9 @@ async def get_announcement(request: Request, response: Response, announcement_id
     Returns:
         json: announcement information
     """
-    if not announcement_id:
-        response.status_code = status.HTTP_400_BAD_REQUEST
-        return {"error": "Bad request",
-                "message": "Missing announcement id"}
-        
-    if await announcements.exists(announcement_id):
+    if await announcements.exists():
         try:
-            announcement = await announcements.get(announcement_id)
+            announcement = await announcements.get()
         except Exception as e:
             response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
             return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content={"error": "Internal server error"})
@@ -252,12 +246,12 @@ async def get_announcement(request: Request, response: Response, announcement_id
             return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content={"error": "Internal server error"})
     else:
         response.status_code = status.HTTP_404_NOT_FOUND
-        return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content={"error": "Not found", "id": announcement_id})
+        return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content={"error": "Not found"})
     return announcement
 
-@app.delete('/announcement/{announcement_id}', response_model=AnnouncementModels.AnnouncementDeleted, status_code=status.HTTP_200_OK, tags=['Announcements'])
+@app.delete('/announcement/', response_model=AnnouncementModels.AnnouncementDeleted, status_code=status.HTTP_200_OK, tags=['Announcements'])
 @limiter.limit(config['slowapi']['limit'])
-async def delete_announcement(request: Request, response: Response, announcement_id: str = None, responses={
+async def delete_announcement(request: Request, response: Response, responses={
     500: {"model: GeneralErrors.InternalServerError"},
     404: {"model: GeneralErrors.ItemNotFound"},
     400: {"model: GeneralErrors.IdNotProvided"}
@@ -268,19 +262,14 @@ async def delete_announcement(request: Request, response: Response, announcement
     Returns:
         json: deletion status
     """
-    
-    if not announcement_id:
-        response.status_code = status.HTTP_400_BAD_REQUEST
-        return {"error": "Bad request",
-                "message": "Missing announcement id"}
-        
-    if await announcements.exists(announcement_id):
+       
+    if await announcements.exists():
         try:
-            deleted = await announcements.delete(announcement_id)
+            deleted = await announcements.delete()
         except Exception as e:
             response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
             return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content={"error": "Internal server error"})
-        return {"id": announcement_id, "deleted": deleted}
+        return {"deleted": deleted}
     else:
         response.status_code = status.HTTP_404_NOT_FOUND
         return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content={"error": "Client not found"})
@@ -304,7 +293,3 @@ async def startup() -> None:
 # setup right before running to make sure no other library overwrites it
 
 Logger.setup_logging(LOG_LEVEL=config["logging"]["level"], JSON_LOGS=config["logging"]["json_logs"])
-
-# Run app
-if __name__ == '__main__':
-    uvicorn.run(app, host=config['uvicorn']['host'], port=config['uvicorn']['port'])

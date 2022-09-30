@@ -7,6 +7,6 @@
 CORES=$(grep -c ^processor /proc/cpuinfo)
 
 # Start the application
-uvicorn main:app --host="$UVICORN_HOST" --port="$UVICORN_PORT" \
---workers="$CORES" --log-level="$UVICORN_LOG_LEVEL" --server-header \
---proxy-headers --forwarded-allow-ips="*"
+hypercorn main:app --bind="${HYPERCORN_HOST}:${HYPERCORN_PORT}" \
+--workers="$CORES" --log-level="$HYPERCORN_LOG_LEVEL" \
+--worker-class uvloop
