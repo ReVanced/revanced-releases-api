@@ -34,7 +34,7 @@ jobs:
         path: reports/flake8/
 
   security_checks:
-    needs: pytest
+    needs: flake8
     runs-on: ubuntu-latest
     name: Security check
     steps:
