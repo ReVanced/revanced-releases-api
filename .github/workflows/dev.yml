@@ -1,12 +1,11 @@
-name: Test build a feature branch
+name: Build dev branch
 
 on:
+  push:
+    branches: [ "dev" ]
+  schedule:
+    - cron: '24 9 * * 6'
   workflow_dispatch:
-    inputs:
-      branch:
-        description: 'The branch to test build'
-        required: true
-        default: ''
 
 env:
   REGISTRY: ghcr.io
@@ -14,7 +13,18 @@ env:
   IMAGE_TAG: ${{ github.sha }}
 
 jobs:
+  security_checks:
+    runs-on: ubuntu-latest
+    name: Security check
+    steps:
+      - uses: actions/checkout@v2
+      - name: Security Checks (PyCharm Security)
+        uses: tonybaloney/pycharm-security@master
+        with:
+          path: .
+
   build:
+    needs: security_checks
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -57,9 +67,3 @@ jobs:
           push: false
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-
-      - name: Upload image
-        uses: ishworkh/docker-image-artifact-upload@v1
-        with:
-          image: ${{ steps.meta.outputs.tags }}
-          retention_days: "1"
