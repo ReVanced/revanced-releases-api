@@ -54,7 +54,7 @@ jobs:
             latest=${{ startsWith(github.ref, 'refs/heads/main') }}
             suffix=-${{ github.sha }}
 
-      - name: Build and push Docker image
+      - name: Build Docker image
         id: build
         uses: docker/build-push-action@v2
         with:
@@ -62,6 +62,17 @@ jobs:
           context: .
           file: ./Dockerfile
           platforms: linux/amd64,linux/arm64/v8
-          push: true
+          push: false
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
+    - name: Push Docker image
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./gradlew build
+      - name: Setup semantic-release
+        run: npm install -g semantic-release @semantic-release/git @semantic-release/changelog @codedependant/semantic-release-docker -D
+      - name: Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx semantic-release
