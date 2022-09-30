@@ -32,10 +32,23 @@ jobs:
       with:
         ref: ${{ env.default_branch }}
 
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10.7'
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        if [ -f requirements.txt ];
+        then pip install -r requirements.txt;
+        fi
+        echo "CODEQL_PYTHON=$(which python)" >> $GITHUB_ENV
+
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v2
       with:
         languages: ${{ matrix.language }}
+        setup-python-dependencies: false
 
     - name: Autobuild
       uses: github/codeql-action/autobuild@v2
