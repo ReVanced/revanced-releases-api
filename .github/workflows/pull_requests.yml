@@ -15,10 +15,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - name: Set up Python 3.10.6
+    - name: Set up Python 3.10.7
       uses: actions/setup-python@v1
       with:
-        python-version: 3.10.6
+        python-version: 3.10.7
     - name: Lint with flake8
       run: |
         pip install flake8 flake8-html
@@ -45,6 +45,7 @@ jobs:
           path: .
 
   build:
+    needs: security_checks
     runs-on: ubuntu-latest
     permissions:
       contents: read

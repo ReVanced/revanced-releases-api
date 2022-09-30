@@ -2,17 +2,15 @@ name: "CodeQL"
 
 on:
   push:
-    branches: [ "main", "dev" ]
+    branches: [ "dev" ]
   pull_request:
-    branches: [ "main", "dev" ]
+    branches: [ "dev" ]
   schedule:
     - cron: '21 13 * * 3'
   workflow_dispatch:
-    inputs:
-      branch:
-        description: 'Custom branch'
-        required: false
-        default: ''
+
+env:
+  default_branch: dev
 
 jobs:
   analyze:
@@ -31,9 +29,8 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3
-      if: github.event_name == 'workflow_dispatch' && github.event.inputs.branch != ''
       with:
-        ref: ${{ inputs.branch }}
+        ref: ${{ env.default_branch }}
 
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v2
