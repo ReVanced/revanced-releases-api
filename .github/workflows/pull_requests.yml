@@ -1,10 +1,6 @@
-name: Build and Publish Docker Image
-
 on:
-  push:
-    branches: [ main ]
-  schedule:
-    - cron: '24 9 * * 6'
+  pull_request:
+    branches: [ "main", "dev" ]
   workflow_dispatch:
 
 env:
@@ -13,7 +9,18 @@ env:
   IMAGE_TAG: ${{ github.sha }}
 
 jobs:
+  security_checks:
+    runs-on: ubuntu-latest
+    name: Security check
+    steps:
+      - uses: actions/checkout@v2
+      - name: Security Checks (PyCharm Security)
+        uses: tonybaloney/pycharm-security@master
+        with:
+          path: .
+
   build:
+    needs: security_checks
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -22,7 +29,9 @@ jobs:
     steps:
       - name: Checkout Dockerfile
         id: checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ inputs.branch }}
 
       - name: Setup QEMU
         id: qemu
@@ -34,14 +43,6 @@ jobs:
       - name: Setup Docker Buildx
         id: buildx
         uses: docker/setup-buildx-action@v1
-
-      - name: Login to GitHub Container Registry
-        id: ghcr
-        uses: docker/login-action@v1
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GH_TOKEN }}
 
       - name: Extract metadata (tags, labels) for Docker
         id: meta
@@ -56,21 +57,9 @@ jobs:
         id: build
         uses: docker/build-push-action@v2
         with:
-          build-args: GH_TOKEN=${{ secrets.GH_TOKEN }}
           context: .
           file: ./Dockerfile
           platforms: linux/amd64,linux/arm64/v8
           push: false
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-
-    - name: Push Docker image
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: ./gradlew build
-      - name: Setup semantic-release
-        run: npm install -g semantic-release @semantic-release/git @semantic-release/changelog @codedependant/semantic-release-docker -D
-      - name: Release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx semantic-release
