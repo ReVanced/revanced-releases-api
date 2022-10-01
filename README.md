@@ -2,7 +2,7 @@
 
 ![License: AGPLv3](https://img.shields.io/github/license/revanced/revanced-releases-api)
 ![GitHub last commit](https://img.shields.io/github/last-commit/revanced/revanced-releases-api)
-![GitHub Workflow Status](https://img.shields.io/github/workflow/status/revanced/revanced-releases-api/Build%20dev%20branch)
+![GitHub Workflow Status](https://github.com/revanced/revanced-releases-api/actions/workflows/dev.yml/badge.svg)
 
 This is a simple API that returns the latest ReVanced releases, patches and contributors.
 
