@@ -1,10 +1,10 @@
 import toml
 from redis import asyncio as aioredis
 
-import modules.utils.Logger as Logger
-from modules.utils.Generators import Generators
-from modules.models.AnnouncementModels import AnnouncementCreateModel, AnnouncementModel
-from modules.utils.RedisConnector import RedisConnector
+import src.utils.Logger as Logger
+from src.utils.Generators import Generators
+from src.models.AnnouncementModels import AnnouncementCreateModel
+from src.utils.RedisConnector import RedisConnector
 
 config: dict = toml.load("config.toml")
 

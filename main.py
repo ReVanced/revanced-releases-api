@@ -18,19 +18,19 @@ from sentry_sdk.integrations.redis import RedisIntegration
 from sentry_sdk.integrations.httpx import HttpxIntegration
 from sentry_sdk.integrations.gnu_backtrace import GnuBacktraceIntegration
 
-from modules.Releases import Releases
-from modules.Clients import Clients
-from modules.Announcements import Announcements
+from src.controllers.Releases import Releases
+from src.controllers.Clients import Clients
+from src.controllers.Announcements import Announcements
 
-from modules.utils.Generators import Generators
-from modules.utils.RedisConnector import RedisConnector
+from src.utils.Generators import Generators
+from src.utils.RedisConnector import RedisConnector
 
-import modules.models.ClientModels as ClientModels
-import modules.models.GeneralErrors as GeneralErrors
-import modules.models.ResponseModels as ResponseModels
-import modules.models.AnnouncementModels as AnnouncementModels
+import src.models.ClientModels as ClientModels
+import src.models.GeneralErrors as GeneralErrors
+import src.models.ResponseModels as ResponseModels
+import src.models.AnnouncementModels as AnnouncementModels
 
-import modules.utils.Logger as Logger
+import src.utils.Logger as Logger
 
 # Enable sentry logging
 

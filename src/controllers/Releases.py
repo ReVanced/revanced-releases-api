@@ -3,8 +3,8 @@ import asyncio
 import uvloop
 import orjson
 from base64 import b64decode
-from modules.utils.HTTPXClient import HTTPXClient
-from modules.utils.InternalCache import InternalCache
+from src.utils.HTTPXClient import HTTPXClient
+from src.utils.InternalCache import InternalCache
 
 
 class Releases:

@@ -3,8 +3,8 @@ import toml
 from typing import Any
 from redis import asyncio as aioredis
 
-import modules.utils.Logger as Logger
-from modules.utils.RedisConnector import RedisConnector
+import src.utils.Logger as Logger
+from src.utils.RedisConnector import RedisConnector
 
 config: dict = toml.load("config.toml")
 

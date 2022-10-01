@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+
 class ClientModel(BaseModel):
     """Implements the fields for the clients.
 
