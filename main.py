@@ -196,7 +196,7 @@ async def update_client(request: Request, response: Response, client_id: str = N
     if await clients.exists(client_id):
         new_secret: str = await generators.generate_secret()
         
-        if clients.update_secret(client_id, new_secret):
+        if await clients.update_secret(client_id, new_secret):
             return {"id": client_id, "secret": new_secret}
         else: 
             raise HTTPException(status_code=500, detail={

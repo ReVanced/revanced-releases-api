@@ -138,13 +138,17 @@ class Clients:
         
         ph: argon2.PasswordHasher = argon2.PasswordHasher()
         
+        updated: bool = False
+        
         try:
             await self.redis.json().set(client_id, '.secret', ph.hash(new_secret))
             await self.UserLogger.log("UPDATE_SECRET", None, client_id)
+            updated = True
         except aioredis.RedisError as e:
             await self.UserLogger.log("UPDATE_SECRET", e)
             raise e
-        return True
+        
+        return updated
     
     async def authenticate(self, client_id: str, secret: str) -> bool:
         """Check if the secret of a client is correct

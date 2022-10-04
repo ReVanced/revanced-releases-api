@@ -58,7 +58,7 @@ class ClientSecretUpdatedResponse(BaseModel):
     """
     
     id: str
-    new_secret: str
+    secret: str
 
 class ClientAuthTokenResponse(BaseModel):
     """Implements the response fields for client auth tokens.
