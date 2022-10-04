@@ -39,3 +39,42 @@ class PingResponseModel(BaseModel):
     
     status: int
     detail: str
+
+class ClientDeletedResponse(BaseModel):
+    """Implements the response fields for deleted clients.
+
+    Args:
+        BaseModel (pydantic.BaseModel): BaseModel from pydantic
+    """
+    
+    id: str
+    deleted: bool
+    
+class ClientSecretUpdatedResponse(BaseModel):
+    """Implements the response fields for updated client secrets.
+
+    Args:
+        BaseModel (pydantic.BaseModel): BaseModel from pydantic
+    """
+    
+    id: str
+    new_secret: str
+
+class ClientAuthTokenResponse(BaseModel):
+    """Implements the response fields for client auth tokens.
+
+    Args:
+        BaseModel (pydantic.BaseModel): BaseModel from pydantic
+    """
+    
+    access_token: str
+    refresh_token: str
+
+class ClientTokenRefreshResponse(BaseModel):
+    """Implements the response fields for client token refresh.
+
+    Args:
+        BaseModel (pydantic.BaseModel): BaseModel from pydantic
+    """
+    
+    access_token: str

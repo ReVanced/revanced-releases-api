@@ -28,3 +28,12 @@ class IdNotProvided(BaseModel):
     
     error: str
     message: str
+    
+class Unauthorized(BaseModel):
+    """Implements the response fields for when the client is unauthorized.
+
+    Args:
+        BaseModel (pydantic.BaseModel): BaseModel from pydantic
+    """
+    
+    error: str

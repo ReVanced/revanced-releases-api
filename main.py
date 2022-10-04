@@ -3,7 +3,7 @@
 import toml
 import sentry_sdk
 
-from fastapi import FastAPI, Request, Response, status
+from fastapi import FastAPI, Request, Response, status,  HTTPException, Depends
 from fastapi.responses import RedirectResponse, JSONResponse
 
 from slowapi.util import get_remote_address
@@ -14,10 +14,14 @@ from fastapi_cache.decorator import cache
 from slowapi.errors import RateLimitExceeded
 from fastapi_cache.backends.redis import RedisBackend
 
+from fastapi_paseto_auth import AuthPASETO
+from fastapi_paseto_auth.exceptions import AuthPASETOException
+
 from sentry_sdk.integrations.redis import RedisIntegration
 from sentry_sdk.integrations.httpx import HttpxIntegration
 from sentry_sdk.integrations.gnu_backtrace import GnuBacktraceIntegration
 
+import src.controllers.Auth as Auth
 from src.controllers.Releases import Releases
 from src.controllers.Clients import Clients
 from src.controllers.Announcements import Announcements
@@ -76,6 +80,17 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 @cache()
 async def get_cache() -> int:
     return 1
+
+# Setup PASETO
+
+@AuthPASETO.load_config
+def get_config():
+    return Auth.PasetoSettings()
+
+
+@app.exception_handler(AuthPASETOException)
+def authpaseto_exception_handler(request: Request, exc: AuthPASETOException):
+    return JSONResponse(status_code=exc.status_code, content={"detail": exc.message})
 
 # Routes
 
@@ -140,7 +155,7 @@ async def create_client(request: Request, response: Response, admin: bool | None
                 "message": "Database error"}
     return new_client
 
-@app.delete('/client/{client_id}', response_model=ClientModels.ClientDeleted, status_code=status.HTTP_200_OK, tags=['Clients'])
+@app.delete('/client/{client_id}', response_model=ResponseModels.ClientDeletedResponse, status_code=status.HTTP_200_OK, tags=['Clients'])
 @limiter.limit(config['slowapi']['limit'])
 async def delete_client(request: Request, response: Response, client_id: str = None, responses={
     500: {"model: GeneralErrors.InternalServerError"},
@@ -170,7 +185,7 @@ async def delete_client(request: Request, response: Response, client_id: str = N
         response.status_code = status.HTTP_404_NOT_FOUND
         return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content={"error": "Client not found"})
 
-@app.patch('/client/{client_id}', response_model=ClientModels.ClientSecret, status_code=status.HTTP_200_OK, tags=['Clients'])
+@app.patch('/client/{client_id}', response_model=ResponseModels.ClientSecretUpdatedResponse, status_code=status.HTTP_200_OK, tags=['Clients'])
 @limiter.limit(config['slowapi']['limit'])
 async def update_client(request: Request, response: Response, client_id: str = None, responses={
     500: {"model: GeneralErrors.InternalServerError"},
@@ -204,7 +219,7 @@ async def update_client(request: Request, response: Response, client_id: str = N
         response.status_code = status.HTTP_404_NOT_FOUND
         return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content={"error": "Not found", "id": client_id})
 
-@app.post('/announcement', response_model=AnnouncementModels.AnnouncementCreatedResponse, status_code=status.HTTP_200_OK, tags=['Announcements'])
+@app.post('/announcement', response_model=AnnouncementModels.AnnouncementCreatedResponse, status_code=status.HTTP_201_CREATED, tags=['Announcements'])
 @limiter.limit(config['slowapi']['limit'])
 async def create_announcement(request: Request, response: Response, announcement: AnnouncementModels.AnnouncementCreateModel, responses={
     500: {"model: GeneralErrors.InternalServerError"},
@@ -273,6 +288,84 @@ async def delete_announcement(request: Request, response: Response, responses={
     else:
         response.status_code = status.HTTP_404_NOT_FOUND
         return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content={"error": "Client not found"})
+
+@app.post('/auth', response_model=ResponseModels.ClientAuthTokenResponse, status_code=status.HTTP_200_OK, tags=['Authentication'])
+@limiter.limit(config['slowapi']['limit'])
+async def auth(request: Request, response: Response, client: ClientModels.ClientAuthModel, Authorize: AuthPASETO = Depends(), responses={
+    500: {"model: GeneralErrors.InternalServerError"},
+    401: {"model: GeneralErrors.Unauthorized"}
+}
+               ) -> dict | JSONResponse:
+    """Authenticate a client and get an auth token.
+
+    Returns:
+        access_token: auth token
+        refresh_token: refresh token
+    """
+    
+    admin_claim: dict[str, bool]
+    
+    if await clients.exists(client.id):
+        try:
+            authenticated: bool = await clients.authenticate(client.id, client.secret)
+        except Exception as e:
+            response.status_code = status.HTTP_401_UNAUTHORIZED
+            return JSONResponse(status_code=status.HTTP_401_UNAUTHORIZED, content={"error": "Unauthorized"})
+        if authenticated:
+            try:
+                if await clients.is_admin(client.id):
+                    admin_claim = {"admin": True}
+                    access_token = Authorize.create_access_token(subject=client.id, user_claims=admin_claim)
+                    refresh_token = Authorize.create_refresh_token(subject=client.id, user_claims=admin_claim)
+                else:
+                    admin_claim = {"admin": False}
+                    access_token = Authorize.create_access_token(subject=client.id, user_claims=admin_claim)
+                    refresh_token = Authorize.create_refresh_token(subject=client.id, user_claims=admin_claim)
+            except Exception as e:
+                response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+                return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content={"error": "Internal server error"})
+            return {"access_token": access_token, "refresh_token": refresh_token}
+        else:
+            response.status_code = status.HTTP_401_UNAUTHORIZED
+            return JSONResponse(status_code=status.HTTP_401_UNAUTHORIZED, content={"error": "Unauthorized"})
+    else:
+        response.status_code = status.HTTP_401_UNAUTHORIZED
+        return JSONResponse(status_code=status.HTTP_401_UNAUTHORIZED, content={"error": "Unauthorized"})
+
+@app.post('/refresh', response_model=ResponseModels.ClientTokenRefreshResponse, status_code=status.HTTP_200_OK, tags=['Authentication'])
+@limiter.limit(config['slowapi']['limit'])
+async def refresh(request: Request, response: Response, Authorize: AuthPASETO = Depends()):
+    """Refresh an auth token.
+    
+    Returns:
+        access_token: auth token
+    """
+    
+    Authorize.paseto_required(refresh_token=True)
+    
+    admin_claim: dict[str, bool]
+    
+    new_access_token: str
+    
+    current_user: str | int | None = Authorize.get_subject()
+
+    if 'admin' in Authorize.get_token_payload():
+        admin_claim = {"admin": Authorize.get_token_payload()['admin']}
+        new_access_token = Authorize.create_access_token(subject=current_user, user_claims=admin_claim)
+        
+        return {"access_token": new_access_token}
+    
+    admin_claim = {"admin": False}
+    new_access_token = Authorize.create_access_token(subject=current_user, user_claims=admin_claim)
+    
+    return {"access_token": new_access_token}
+
+@app.get("/claims")
+def user(Authorize: AuthPASETO = Depends()):
+    Authorize.paseto_required()
+
+    foo_claims = Authorize.get_token_payload()["admin"]
+    return {"admin": foo_claims}
 
 @app.head('/ping', status_code=status.HTTP_204_NO_CONTENT, tags=['Misc'])
 @limiter.limit(config['slowapi']['limit'])

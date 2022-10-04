@@ -10,24 +10,14 @@ class ClientModel(BaseModel):
     id: str
     secret: str
     admin: bool
-    
-class ClientDeleted(BaseModel):
-    """Implements the response fields for deleted clients.
+
+class ClientAuthModel(BaseModel):
+    """Implements the fields for client authentication.
 
     Args:
         BaseModel (pydantic.BaseModel): BaseModel from pydantic
     """
     
     id: str
-    deleted: bool
-    
-class ClientSecret(BaseModel):
-    """Implements the response fields for updated client secrets.
-
-    Args:
-        BaseModel (pydantic.BaseModel): BaseModel from pydantic
-    """
-    
-    id: str
-    new_secret: str
+    secret: str
     

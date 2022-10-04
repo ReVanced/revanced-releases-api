@@ -1,6 +1,6 @@
 import toml
 from typing import Optional
-from argon2 import PasswordHasher
+import argon2
 from redis import asyncio as aioredis
 
 import src.utils.Logger as Logger
@@ -48,7 +48,7 @@ class Clients:
         """
         
         client_payload: dict[str, str | bool] = {}
-        ph = PasswordHasher()
+        ph: argon2.PasswordHasher = argon2.PasswordHasher()
         
         client_payload['secret'] = ph.hash(client.secret)
         client_payload['admin'] = client.admin
@@ -136,10 +136,53 @@ class Clients:
             bool: True if the secret was updated successfully, False otherwise
         """
         try:
-            ph = PasswordHasher()
+            ph: argon2.PasswordHasher = argon2.PasswordHasher()
             await self.redis.json().set(client_id, '.secret', ph.hash(new_secret))
             await self.UserLogger.log("UPDATE_SECRET", None, client_id)
         except aioredis.RedisError as e:
             await self.UserLogger.log("UPDATE_SECRET", e)
             return False
         return True
+    
+    async def authenticate(self, client_id: str, secret: str) -> bool:
+        """Check if the secret of a client is correct
+
+        Args:
+            client_id (str): UUID of the client
+            secret (str): Secret of the client
+
+        Returns:
+            bool: True if the secret is correct, False otherwise
+        """
+        try:
+            ph: argon2.PasswordHasher = argon2.PasswordHasher()
+            client_secret: str = await self.redis.json().get(client_id, '.secret')
+            if ph.verify(client_secret, secret):
+                await self.UserLogger.log("CHECK_SECRET", None, client_id)
+                if ph.check_needs_rehash(client_secret):
+                    try:
+                        await self.redis.json().set(client_id, '.secret', ph.hash(secret))
+                        await self.UserLogger.log("REHASH SECRET", None, client_id)
+                    except aioredis.RedisError as e:
+                        await self.UserLogger.log("REHASH SECRET", e)
+        except aioredis.RedisError as e:
+            await self.UserLogger.log("CHECK_SECRET", e)
+            return False
+        return True
+    
+    async def is_admin(self, client_id: str) -> bool:
+        """Check if a client has admin access
+
+        Args:
+            client_id (str): UUID of the client
+
+        Returns:
+            bool: True if the client has admin access, False otherwise
+        """
+        try:
+            client_admin: bool = await self.redis.json().get(client_id, '.admin')
+            await self.UserLogger.log("CHECK_ADMIN", None, client_id)
+        except aioredis.RedisError as e:
+            await self.UserLogger.log("CHECK_ADMIN", e)
+            return False
+        return client_admin
