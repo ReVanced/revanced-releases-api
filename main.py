@@ -4,7 +4,7 @@ import toml
 import sentry_sdk
 
 from fastapi import FastAPI, Request, Response, status,  HTTPException, Depends
-from fastapi.responses import RedirectResponse, JSONResponse
+from fastapi.responses import RedirectResponse, JSONResponse, UJSONResponse
 
 from slowapi.util import get_remote_address
 from slowapi import Limiter, _rate_limit_exceeded_handler
@@ -67,7 +67,9 @@ app = FastAPI(title=config['docs']['title'],
               version=config['docs']['version'],
               license_info={"name": config['license']['name'],
                             "url": config['license']['url']
-                            })
+                            },
+              default_response_class=UJSONResponse
+              )
 
 # Slowapi limiter
 
@@ -86,7 +88,6 @@ async def get_cache() -> int:
 @AuthPASETO.load_config
 def get_config():
     return Auth.PasetoSettings()
-
 
 @app.exception_handler(AuthPASETOException)
 def authpaseto_exception_handler(request: Request, exc: AuthPASETOException):
@@ -140,29 +141,21 @@ async def contributors(request: Request, response: Response) -> dict:
 
 @app.post('/client', response_model=ClientModels.ClientModel, status_code=status.HTTP_201_CREATED, tags=['Clients'])
 @limiter.limit(config['slowapi']['limit'])
-async def create_client(request: Request, response: Response, admin: bool | None = False) -> ClientModels.ClientModel | dict:
+async def create_client(request: Request, response: Response, admin: bool | None = False) -> ClientModels.ClientModel:
     """Create a new API client.
 
     Returns:
         json: client information
     """
-    new_client =  await clients.generate(admin=admin)
-    try:
-        await clients.store(new_client)
-    except Exception as e:
-        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-        return {"error": "Internal server error",
-                "message": "Database error"}
-    return new_client
+    client: ClientModels.ClientModel =  await clients.generate(admin=admin)
+    
+    await clients.store(client)
+    
+    return client
 
 @app.delete('/client/{client_id}', response_model=ResponseModels.ClientDeletedResponse, status_code=status.HTTP_200_OK, tags=['Clients'])
 @limiter.limit(config['slowapi']['limit'])
-async def delete_client(request: Request, response: Response, client_id: str = None, responses={
-    500: {"model: GeneralErrors.InternalServerError"},
-    404: {"model: GeneralErrors.ItemNotFound"},
-    400: {"model: GeneralErrors.IdNotProvided"}
-    }
-                       ) -> dict | JSONResponse:
+async def delete_client(request: Request, response: Response, client_id: str = None) -> dict:
     """Delete an API client.
 
     Returns:
@@ -170,54 +163,53 @@ async def delete_client(request: Request, response: Response, client_id: str = N
     """
     
     if not client_id:
-        response.status_code = status.HTTP_400_BAD_REQUEST
-        return {"error": "Bad request",
-                "message": "Missing client id"}
+        raise HTTPException(status_code=400, detail={
+            "error": GeneralErrors.IdNotProvided().error,
+            "message": GeneralErrors.IdNotProvided().message
+            }
+                            )
         
     if await clients.exists(client_id):
-        try:
-            deleted = await clients.delete(client_id)
-        except Exception as e:
-            response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-            return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content={"error": "Internal server error"})
-        return {"id": client_id, "deleted": deleted}
+        return {"id": client_id, "deleted": await clients.delete(client_id)}
     else:
-        response.status_code = status.HTTP_404_NOT_FOUND
-        return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content={"error": "Client not found"})
+        raise HTTPException(status_code=404, detail={
+            "error": GeneralErrors.ClientNotFound().error,
+            "message": GeneralErrors.ClientNotFound().message
+            }
+                            )
 
 @app.patch('/client/{client_id}', response_model=ResponseModels.ClientSecretUpdatedResponse, status_code=status.HTTP_200_OK, tags=['Clients'])
 @limiter.limit(config['slowapi']['limit'])
-async def update_client(request: Request, response: Response, client_id: str = None, responses={
-    500: {"model: GeneralErrors.InternalServerError"},
-    404: {"model: GeneralErrors.ItemNotFound"},
-    400: {"model: GeneralErrors.IdNotProvided"}
-    }
-                       ) -> dict | JSONResponse:
+async def update_client(request: Request, response: Response, client_id: str = None) -> dict:
     """Update an API client's secret.
 
     Returns:
         json: client ID and secret
     """
     if not client_id:
-        response.status_code = status.HTTP_400_BAD_REQUEST
-        return {"error": "Bad request",
-                "message": "Missing client id"}
+        raise HTTPException(status_code=400, detail={
+            "error": GeneralErrors.IdNotProvided().error,
+            "message": GeneralErrors.IdNotProvided().message
+            }
+                            )
         
     if await clients.exists(client_id):
-        try:
-            new_secret = await generators.generate_secret()
-            updated = await clients.update_secret(client_id, new_secret)
-        except Exception as e:
-            response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-            return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content={"error": "Internal server error"})
-        if updated:
-            return {"id": client_id, "new_secret": new_secret}
-        else:
-            response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-            return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content={"error": "Internal server error"})
+        new_secret: str = await generators.generate_secret()
+        
+        if clients.update_secret(client_id, new_secret):
+            return {"id": client_id, "secret": new_secret}
+        else: 
+            raise HTTPException(status_code=500, detail={
+                "error": GeneralErrors.InternalServerError().error,
+                "message": GeneralErrors.InternalServerError().message
+                }
+                                )
     else:
-        response.status_code = status.HTTP_404_NOT_FOUND
-        return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content={"error": "Not found", "id": client_id})
+        raise HTTPException(status_code=404, detail={
+            "error": GeneralErrors.ClientNotFound().error,
+            "message": GeneralErrors.ClientNotFound().message
+            }
+                            )
 
 @app.post('/announcement', response_model=AnnouncementModels.AnnouncementCreatedResponse, status_code=status.HTTP_201_CREATED, tags=['Announcements'])
 @limiter.limit(config['slowapi']['limit'])
@@ -346,19 +338,24 @@ async def refresh(request: Request, response: Response, Authorize: AuthPASETO = 
     admin_claim: dict[str, bool]
     
     new_access_token: str
-    
-    current_user: str | int | None = Authorize.get_subject()
 
-    if 'admin' in Authorize.get_token_payload():
-        admin_claim = {"admin": Authorize.get_token_payload()['admin']}
+    try:
+    
+        current_user: str | int | None = Authorize.get_subject()
+
+        if 'admin' in Authorize.get_token_payload():
+            admin_claim = {"admin": Authorize.get_token_payload()['admin']}
+            new_access_token = Authorize.create_access_token(subject=current_user, user_claims=admin_claim)
+            
+            return {"access_token": new_access_token}
+        
+        admin_claim = {"admin": False}
         new_access_token = Authorize.create_access_token(subject=current_user, user_claims=admin_claim)
         
         return {"access_token": new_access_token}
-    
-    admin_claim = {"admin": False}
-    new_access_token = Authorize.create_access_token(subject=current_user, user_claims=admin_claim)
-    
-    return {"access_token": new_access_token}
+    except Exception as e:
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content={"error": "Internal server error"})
 
 @app.get("/claims")
 def user(Authorize: AuthPASETO = Depends()):

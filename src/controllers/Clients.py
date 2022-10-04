@@ -58,7 +58,7 @@ class Clients:
             await self.UserLogger.log("SET", None, client.id)
         except aioredis.RedisError as e:
             await self.UserLogger.log("SET", e)
-            return False
+            raise e
         
         return True
     
@@ -80,7 +80,7 @@ class Clients:
                 return False
         except aioredis.RedisError as e:
             await self.UserLogger.log("EXISTS", e)
-            return False
+            raise e
     
     async def get(self, client_id: str) -> ClientModel | bool:
         """Get a client from the database
@@ -99,7 +99,7 @@ class Clients:
                 await self.UserLogger.log("GET", None, client_id)
             except aioredis.RedisError as e:
                 await self.UserLogger.log("GET", e)
-                return False
+                raise e
             return client
         else:
             return False
@@ -120,7 +120,7 @@ class Clients:
                 await self.UserLogger.log("DELETE", None, client_id)
             except aioredis.RedisError as e:
                 await self.UserLogger.log("DELETE", e)
-                return False
+                raise e
             return True
         else:
             return False
@@ -135,13 +135,15 @@ class Clients:
         Returns:
             bool: True if the secret was updated successfully, False otherwise
         """
+        
+        ph: argon2.PasswordHasher = argon2.PasswordHasher()
+        
         try:
-            ph: argon2.PasswordHasher = argon2.PasswordHasher()
             await self.redis.json().set(client_id, '.secret', ph.hash(new_secret))
             await self.UserLogger.log("UPDATE_SECRET", None, client_id)
         except aioredis.RedisError as e:
             await self.UserLogger.log("UPDATE_SECRET", e)
-            return False
+            raise e
         return True
     
     async def authenticate(self, client_id: str, secret: str) -> bool:
@@ -154,21 +156,24 @@ class Clients:
         Returns:
             bool: True if the secret is correct, False otherwise
         """
+        
+        ph: argon2.PasswordHasher = argon2.PasswordHasher()
+        authenticated: bool = False
+        client_secret: str = await self.redis.json().get(client_id, '.secret')
+        
         try:
-            ph: argon2.PasswordHasher = argon2.PasswordHasher()
-            client_secret: str = await self.redis.json().get(client_id, '.secret')
             if ph.verify(client_secret, secret):
                 await self.UserLogger.log("CHECK_SECRET", None, client_id)
+                
                 if ph.check_needs_rehash(client_secret):
-                    try:
-                        await self.redis.json().set(client_id, '.secret', ph.hash(secret))
-                        await self.UserLogger.log("REHASH SECRET", None, client_id)
-                    except aioredis.RedisError as e:
-                        await self.UserLogger.log("REHASH SECRET", e)
+                    await self.redis.json().set(client_id, '.secret', ph.hash(secret))
+                    await self.UserLogger.log("REHASH SECRET", None, client_id)
+            authenticated = True
         except aioredis.RedisError as e:
             await self.UserLogger.log("CHECK_SECRET", e)
-            return False
-        return True
+            raise e
+
+        return authenticated
     
     async def is_admin(self, client_id: str) -> bool:
         """Check if a client has admin access
@@ -179,10 +184,14 @@ class Clients:
         Returns:
             bool: True if the client has admin access, False otherwise
         """
+        
+        client_admin: bool = False
+        
         try:
-            client_admin: bool = await self.redis.json().get(client_id, '.admin')
+            client_admin = await self.redis.json().get(client_id, '.admin')
             await self.UserLogger.log("CHECK_ADMIN", None, client_id)
         except aioredis.RedisError as e:
             await self.UserLogger.log("CHECK_ADMIN", e)
-            return False
+            raise e
+        
         return client_admin
