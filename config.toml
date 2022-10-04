@@ -16,13 +16,13 @@ The team also have a [Discord Server](https://revanced.app/discord) if you need 
 ## Additional Notes
 
 1. Although we will try to avoid breaking changes, we can't guarantee that it won't happen.
-2. Okay, the api is now cached and rate limited (per endpoint). But please don't abuse it, we don't want to have to block you.
-3. Make sure to implement a cache system on your end to avoid unnecessary requests.
+2. Make sure to implement a cache system on your end to avoid unnecessary requests.
+3. API abuse will result in IP blocks.
 
 Godspeed 💀
 
 """
-version = "0.5.2 beta"
+version = "0.8 RC"
 
 [license]
 

@@ -213,57 +213,45 @@ async def update_client(request: Request, response: Response, client_id: str = N
 
 @app.post('/announcement', response_model=AnnouncementModels.AnnouncementCreatedResponse, status_code=status.HTTP_201_CREATED, tags=['Announcements'])
 @limiter.limit(config['slowapi']['limit'])
-async def create_announcement(request: Request, response: Response, announcement: AnnouncementModels.AnnouncementCreateModel, responses={
-    500: {"model: GeneralErrors.InternalServerError"},
-    }
-                              ) -> dict | JSONResponse:
+async def create_announcement(request: Request, response: Response, announcement: AnnouncementModels.AnnouncementCreateModel, Authorize: AuthPASETO = Depends()) -> dict:
     """Create a new announcement.
 
     Returns:
         json: announcement information
     """
-    try:
-        announcement_created: bool = await announcements.store(announcement)
-    except Exception as e:
-        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-        return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content={"error": "Internal server error"})
-    return {"created": announcement_created}
+    Authorize.paseto_required()
+    
+    announcement_created: bool = await announcements.store(announcement)
+    
+    if announcement_created:
+        return {"created": announcement_created}
+    else:
+        raise HTTPException(status_code=500, detail={
+            "error": GeneralErrors.InternalServerError().error,
+            "message": GeneralErrors.InternalServerError().message
+            }
+                            )
 
-@app.get('/announcement/', response_model=AnnouncementModels.AnnouncementModel, tags=['Announcements'])
+@app.get('/announcement', response_model=AnnouncementModels.AnnouncementModel, tags=['Announcements'])
 @limiter.limit(config['slowapi']['limit'])
-async def get_announcement(request: Request, response: Response, responses={
-    500: {"model: GeneralErrors.InternalServerError"},
-    404: {"model: GeneralErrors.ItemNotFound"},
-    400: {"model: GeneralErrors.IdNotProvided"}
-    }
-                          ) -> JSONResponse | dict:
+async def get_announcement(request: Request, response: Response) -> dict:
     """Get an announcement.
 
     Returns:
         json: announcement information
     """
     if await announcements.exists():
-        try:
-            announcement = await announcements.get()
-        except Exception as e:
-            response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-            return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content={"error": "Internal server error"})
-        if not announcement:
-            response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-            return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content={"error": "Internal server error"})
+        return await announcements.get()
     else:
-        response.status_code = status.HTTP_404_NOT_FOUND
-        return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content={"error": "Not found"})
-    return announcement
+        raise HTTPException(status_code=404, detail={
+            "error": GeneralErrors.AnnouncementNotFound().error,
+            "message": GeneralErrors.AnnouncementNotFound().message
+            }
+                            )
 
-@app.delete('/announcement/', response_model=AnnouncementModels.AnnouncementDeleted, status_code=status.HTTP_200_OK, tags=['Announcements'])
+@app.delete('/announcement', response_model=AnnouncementModels.AnnouncementDeleted, status_code=status.HTTP_200_OK, tags=['Announcements'])
 @limiter.limit(config['slowapi']['limit'])
-async def delete_announcement(request: Request, response: Response, responses={
-    500: {"model: GeneralErrors.InternalServerError"},
-    404: {"model: GeneralErrors.ItemNotFound"},
-    400: {"model: GeneralErrors.IdNotProvided"}
-    }
-                       ) -> dict | JSONResponse:
+async def delete_announcement(request: Request, response: Response) -> dict:
     """Delete an announcement.
 
     Returns:
@@ -271,23 +259,17 @@ async def delete_announcement(request: Request, response: Response, responses={
     """
        
     if await announcements.exists():
-        try:
-            deleted = await announcements.delete()
-        except Exception as e:
-            response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-            return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content={"error": "Internal server error"})
-        return {"deleted": deleted}
+        return {"deleted": await announcements.delete()}
     else:
-        response.status_code = status.HTTP_404_NOT_FOUND
-        return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content={"error": "Client not found"})
+        raise HTTPException(status_code=404, detail={
+            "error": GeneralErrors.AnnouncementNotFound().error,
+            "message": GeneralErrors.AnnouncementNotFound().message
+            }
+                            )
 
 @app.post('/auth', response_model=ResponseModels.ClientAuthTokenResponse, status_code=status.HTTP_200_OK, tags=['Authentication'])
 @limiter.limit(config['slowapi']['limit'])
-async def auth(request: Request, response: Response, client: ClientModels.ClientAuthModel, Authorize: AuthPASETO = Depends(), responses={
-    500: {"model: GeneralErrors.InternalServerError"},
-    401: {"model: GeneralErrors.Unauthorized"}
-}
-               ) -> dict | JSONResponse:
+async def auth(request: Request, response: Response, client: ClientModels.ClientAuthModel, Authorize: AuthPASETO = Depends()) -> dict:
     """Authenticate a client and get an auth token.
 
     Returns:
@@ -298,35 +280,34 @@ async def auth(request: Request, response: Response, client: ClientModels.Client
     admin_claim: dict[str, bool]
     
     if await clients.exists(client.id):
-        try:
-            authenticated: bool = await clients.authenticate(client.id, client.secret)
-        except Exception as e:
-            response.status_code = status.HTTP_401_UNAUTHORIZED
-            return JSONResponse(status_code=status.HTTP_401_UNAUTHORIZED, content={"error": "Unauthorized"})
-        if authenticated:
-            try:
-                if await clients.is_admin(client.id):
-                    admin_claim = {"admin": True}
-                    access_token = Authorize.create_access_token(subject=client.id, user_claims=admin_claim)
-                    refresh_token = Authorize.create_refresh_token(subject=client.id, user_claims=admin_claim)
-                else:
-                    admin_claim = {"admin": False}
-                    access_token = Authorize.create_access_token(subject=client.id, user_claims=admin_claim)
-                    refresh_token = Authorize.create_refresh_token(subject=client.id, user_claims=admin_claim)
-            except Exception as e:
-                response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-                return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content={"error": "Internal server error"})
-            return {"access_token": access_token, "refresh_token": refresh_token}
+        authenticated: bool = await clients.authenticate(client.id, client.secret)
+        
+        if not authenticated:
+            raise HTTPException(status_code=401, detail={
+                "error": GeneralErrors.Unauthorized().error,
+                "message": GeneralErrors.Unauthorized().message
+                }
+                                )
         else:
-            response.status_code = status.HTTP_401_UNAUTHORIZED
-            return JSONResponse(status_code=status.HTTP_401_UNAUTHORIZED, content={"error": "Unauthorized"})
+            if await clients.is_admin(client.id):
+                admin_claim = {"admin": True}
+            else:
+                admin_claim = {"admin": False}
+                
+            access_token = Authorize.create_access_token(subject=client.id, user_claims=admin_claim, fresh=True)
+            refresh_token = Authorize.create_refresh_token(subject=client.id, user_claims=admin_claim)
+            
+            return {"access_token": access_token, "refresh_token": refresh_token}
     else:
-        response.status_code = status.HTTP_401_UNAUTHORIZED
-        return JSONResponse(status_code=status.HTTP_401_UNAUTHORIZED, content={"error": "Unauthorized"})
+        raise HTTPException(status_code=401, detail={
+            "error": GeneralErrors.Unauthorized().error,
+            "message": GeneralErrors.Unauthorized().message
+            }
+                            )
 
 @app.post('/refresh', response_model=ResponseModels.ClientTokenRefreshResponse, status_code=status.HTTP_200_OK, tags=['Authentication'])
 @limiter.limit(config['slowapi']['limit'])
-async def refresh(request: Request, response: Response, Authorize: AuthPASETO = Depends()):
+async def refresh(request: Request, response: Response, Authorize: AuthPASETO = Depends()) -> dict:
     """Refresh an auth token.
     
     Returns:
@@ -335,27 +316,14 @@ async def refresh(request: Request, response: Response, Authorize: AuthPASETO = 
     
     Authorize.paseto_required(refresh_token=True)
     
-    admin_claim: dict[str, bool]
+    admin_claim: dict[str, bool] = {"admin": False}
     
-    new_access_token: str
+    current_user: str | int | None = Authorize.get_subject()
 
-    try:
+    if 'admin' in Authorize.get_token_payload():
+        admin_claim = {"admin": Authorize.get_token_payload()['admin']}
     
-        current_user: str | int | None = Authorize.get_subject()
-
-        if 'admin' in Authorize.get_token_payload():
-            admin_claim = {"admin": Authorize.get_token_payload()['admin']}
-            new_access_token = Authorize.create_access_token(subject=current_user, user_claims=admin_claim)
-            
-            return {"access_token": new_access_token}
-        
-        admin_claim = {"admin": False}
-        new_access_token = Authorize.create_access_token(subject=current_user, user_claims=admin_claim)
-        
-        return {"access_token": new_access_token}
-    except Exception as e:
-        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-        return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content={"error": "Internal server error"})
+    return {"access_token": Authorize.create_access_token(subject=current_user, user_claims=admin_claim, fresh=False)}
 
 @app.get("/claims")
 def user(Authorize: AuthPASETO = Depends()):

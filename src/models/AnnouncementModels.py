@@ -11,7 +11,6 @@ class AnnouncementModel(BaseModel):
     """
     
     created_at: int
-    updated_at: int
     author: str
     type: AnnouncementType
     title: str
@@ -45,5 +44,4 @@ class AnnouncementDeleted(BaseModel):
         BaseModel (pydantic.BaseModel): BaseModel from pydantic
     """
     
-    id: str
     deleted: bool

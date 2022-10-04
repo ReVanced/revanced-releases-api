@@ -34,7 +34,6 @@ class Announcements:
         announcement_payload: dict[str, str | int] = {}
         
         announcement_payload['created_at'] = timestamp
-        announcement_payload['updated_at'] = timestamp
         announcement_payload['author'] = announcement.author
         announcement_payload['type'] = announcement.type
         announcement_payload['title'] = announcement.title
@@ -45,7 +44,7 @@ class Announcements:
             await self.AnnouncementsLogger.log("SET", None, announcement_id)
         except aioredis.RedisError as e:
             await self.AnnouncementsLogger.log("SET", e)
-            return False
+            raise e
         
         return True
     
@@ -64,7 +63,7 @@ class Announcements:
                 return False
         except aioredis.RedisError as e:
             await self.AnnouncementsLogger.log("EXISTS", e)
-            return False
+            raise e
     
     async def get(self) -> dict:
         """Get a announcement from the database
@@ -74,10 +73,8 @@ class Announcements:
         """
         
         if await self.exists():
-            await self.AnnouncementsLogger.log("EXISTS", None, "announcement")
             try:
                 announcement: dict[str, str | int] = await self.redis.json().get("announcement")
-                
                 await self.AnnouncementsLogger.log("GET", None, "announcement")
             except aioredis.RedisError as e:
                 await self.AnnouncementsLogger.log("GET", e)

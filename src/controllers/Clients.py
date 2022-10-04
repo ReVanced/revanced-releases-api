@@ -173,9 +173,9 @@ class Clients:
                     await self.redis.json().set(client_id, '.secret', ph.hash(secret))
                     await self.UserLogger.log("REHASH SECRET", None, client_id)
             authenticated = True
-        except aioredis.RedisError as e:
+        except argon2.exceptions.VerifyMismatchError as e:
             await self.UserLogger.log("CHECK_SECRET", e)
-            raise e
+            return authenticated
 
         return authenticated
     

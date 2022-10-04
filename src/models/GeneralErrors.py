@@ -10,15 +10,15 @@ class InternalServerError(BaseModel):
     error: str = "Internal Server Error"
     message: str = "An internal server error occurred. Please try again later."
     
-class ItemNotFound(BaseModel):
+class AnnouncementNotFound(BaseModel):
     """Implements the response fields for when an item is not found.
 
     Args:
         BaseModel (pydantic.BaseModel): BaseModel from pydantic
     """
     
-    error: str
-    id: str
+    error: str = "Not Found"
+    message: str = "No announcement was found."
     
 class ClientNotFound(BaseModel):
     """Implements the response fields for when a client is not found.
@@ -47,4 +47,5 @@ class Unauthorized(BaseModel):
         BaseModel (pydantic.BaseModel): BaseModel from pydantic
     """
     
-    error: str
+    error: str = "Unauthorized"
+    message: str = "The client is unauthorized to access this resource"
