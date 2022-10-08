@@ -1,7 +1,11 @@
+from time import sleep
 import toml
+import orjson
 from typing import Optional
 import argon2
 from redis import asyncio as aioredis
+import aiofiles
+import uvloop
 
 import src.utils.Logger as Logger
 from src.utils.Generators import Generators
@@ -13,6 +17,8 @@ config: dict = toml.load("config.toml")
 class Clients:
     
     """Implements a client for ReVanced Releases API."""
+    
+    uvloop.install()
     
     redis = RedisConnector.connect(config['clients']['database'])
     redis_tokens = RedisConnector.connect(config['tokens']['database'])
@@ -317,3 +323,29 @@ class Clients:
             return False
         
         return False
+    
+    async def setup_admin(self) -> bool:
+        """Create the admin user if it doesn't exist
+
+        Returns:
+            bool: True if the admin user was created successfully, False otherwise
+        """
+        created: bool = False
+        
+        if not await self.exists('admin'):
+            admin_info: ClientModel = await self.generate()
+            admin_info.id = 'admin'
+            admin_info.admin = True
+            try:
+                await self.store(admin_info)
+                await self.UserLogger.log("CREATE_ADMIN | ID |", None, admin_info.id)
+                await self.UserLogger.log("CREATE_ADMIN | SECRET |", None, admin_info.secret)
+                async with aiofiles.open("admin_info.json", "wb") as file:
+                    await file.write(orjson.dumps(vars(admin_info)))
+                    await self.UserLogger.log("CREATE_ADMIN | TO FILE", None, "admin_info.json")
+                created = True
+            except aioredis.RedisError as e:
+                await self.UserLogger.log("CREATE_ADMIN", e)
+                raise e
+        
+        return created

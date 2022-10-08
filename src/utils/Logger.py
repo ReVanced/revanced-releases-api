@@ -4,6 +4,7 @@ from loguru import logger
 from typing import Optional
 from types import FrameType
 from redis import RedisError
+from argon2.exceptions import VerifyMismatchError
 
 class InterceptHandler(logging.Handler):
     """Setups a loging handler for uvicorn and FastAPI.
@@ -82,7 +83,8 @@ class InternalCacheLogger:
             logger.info(f"[InternalCache] REDIS {operation} {key} - OK")
 
 class UserLogger:
-    async def log(self, operation: str, result: RedisError | None = None, key: str = "",) -> None:
+    async def log(self, operation: str, result: RedisError | VerifyMismatchError | None = None,
+                  key: str = "",) -> None:
         """Logs internal cache operations
         
         Args:

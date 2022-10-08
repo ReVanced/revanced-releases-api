@@ -17,7 +17,7 @@ class Announcements:
     
     generators = Generators()
     
-    async def store(self, announcement: AnnouncementCreateModel) -> bool:
+    async def store(self, announcement: AnnouncementCreateModel, author: str) -> bool:
         """Store an announcement in the database
 
         Args:
@@ -34,7 +34,7 @@ class Announcements:
         announcement_payload: dict[str, str | int] = {}
         
         announcement_payload['created_at'] = timestamp
-        announcement_payload['author'] = announcement.author
+        announcement_payload['author'] = author
         announcement_payload['type'] = announcement.type
         announcement_payload['title'] = announcement.title
         announcement_payload['content'] = announcement.content

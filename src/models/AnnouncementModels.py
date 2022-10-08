@@ -23,7 +23,6 @@ class AnnouncementCreateModel(BaseModel):
         BaseModel (pydantic.BaseModel): BaseModel from pydantic
     """
     
-    author: str
     type: AnnouncementType
     title: str
     content: str

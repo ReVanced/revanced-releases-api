@@ -12,6 +12,8 @@ The team also have a [Discord Server](https://revanced.app/discord) if you need 
 
 * Rate Limiting - 60 requests per minute
 * Cache - 5 minutes
+* Token duration - 1 hour
+* Token refresh - 30 days
 
 ## Additional Notes
 

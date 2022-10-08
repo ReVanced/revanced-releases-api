@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
 
+import binascii
 import os
+from typing import Coroutine
 import toml
 import sentry_sdk
+import asyncio
+import uvloop
 
 from fastapi import FastAPI, Request, Response, status,  HTTPException, Depends
 from fastapi.responses import RedirectResponse, JSONResponse, UJSONResponse
@@ -14,6 +18,7 @@ from fastapi_cache import FastAPICache
 from fastapi_cache.decorator import cache
 from slowapi.errors import RateLimitExceeded
 from fastapi_cache.backends.redis import RedisBackend
+from fastapi.exceptions import RequestValidationError
 
 from fastapi_paseto_auth import AuthPASETO
 from fastapi_paseto_auth.exceptions import AuthPASETOException
@@ -61,6 +66,13 @@ clients = Clients()
 
 announcements = Announcements()
 
+# Setup admin client
+uvloop.install()
+
+loop: asyncio.AbstractEventLoop = asyncio.get_event_loop()
+coroutine: Coroutine = clients.setup_admin()
+loop.run_until_complete(coroutine)
+
 # Create FastAPI instance
 
 app = FastAPI(title=config['docs']['title'],
@@ -90,9 +102,24 @@ async def get_cache() -> int:
 def get_config():
     return Auth.PasetoSettings()
 
+# Setup custom error handlers
+
 @app.exception_handler(AuthPASETOException)
-def authpaseto_exception_handler(request: Request, exc: AuthPASETOException):
+async def authpaseto_exception_handler(request: Request, exc: AuthPASETOException):
     return JSONResponse(status_code=exc.status_code, content={"detail": exc.message})
+
+@app.exception_handler(AttributeError)
+async def validation_exception_handler(request, exc):
+    return JSONResponse(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, content={
+        "error": "Unprocessable Entity"
+        })
+
+@app.exception_handler(binascii.Error)
+async def invalid_token_exception_handler(request, exc):
+    return JSONResponse(status_code=status.HTTP_401_UNAUTHORIZED, content={
+        "error": GeneralErrors.Unauthorized().error,
+        "message": GeneralErrors.Unauthorized().message
+        })
 
 # Routes
 
@@ -315,7 +342,8 @@ async def create_announcement(request: Request, response: Response,
     Authorize.paseto_required()
     
     if await clients.auth_checks(Authorize.get_subject(), Authorize.get_jti()):
-        announcement_created: bool = await announcements.store(announcement)
+        announcement_created: bool = await announcements.store(announcement=announcement,
+                                                               author=Authorize.get_subject())
         
         if announcement_created:
             return {"created": announcement_created}
@@ -421,7 +449,7 @@ async def auth(request: Request, response: Response, client: ClientModels.Client
             }
                             )
 
-@app.post('/refresh', response_model=ResponseModels.ClientTokenRefreshResponse,
+@app.post('/auth/refresh', response_model=ResponseModels.ClientTokenRefreshResponse,
           status_code=status.HTTP_200_OK, tags=['Authentication'])
 @limiter.limit(config['slowapi']['limit'])
 async def refresh(request: Request, response: Response,
