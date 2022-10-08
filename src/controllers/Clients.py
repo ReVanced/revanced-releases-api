@@ -15,6 +15,7 @@ class Clients:
     """Implements a client for ReVanced Releases API."""
     
     redis = RedisConnector.connect(config['clients']['database'])
+    redis_tokens = RedisConnector.connect(config['tokens']['database'])
     
     UserLogger = Logger.UserLogger()
     
@@ -33,7 +34,7 @@ class Clients:
         client_id: str = await self.generators.generate_id()
         client_secret: str = await self.generators.generate_secret()
         
-        client = ClientModel(id=client_id, secret=client_secret, admin=admin)
+        client = ClientModel(id=client_id, secret=client_secret, admin=admin, active=True)
         
         return client
     
@@ -52,6 +53,7 @@ class Clients:
         
         client_payload['secret'] = ph.hash(client.secret)
         client_payload['admin'] = client.admin
+        client_payload['active'] = client.active
         
         try:
             await self.redis.json().set(client.id, '$', client_payload)
@@ -95,7 +97,7 @@ class Clients:
         if await self.exists(client_id):
             try:
                 client_payload: dict[str, str | bool] = await self.redis.json().get(client_id)
-                client = ClientModel(id=client_id, secret=client_payload['secret'], admin=client_payload['admin'])
+                client = ClientModel(id=client_id, secret=client_payload['secret'], admin=client_payload['admin'], active=True)
                 await self.UserLogger.log("GET", None, client_id)
             except aioredis.RedisError as e:
                 await self.UserLogger.log("GET", e)
@@ -199,3 +201,119 @@ class Clients:
             raise e
         
         return client_admin
+    
+    
+    async def is_active(self, client_id: str) -> bool:
+        """Check if a client is active
+
+        Args:
+            client_id (str): UUID of the client
+
+        Returns:
+            bool: True if the client is active, False otherwise
+        """
+        
+        client_active: bool = False
+        
+        try:
+            client_active = await self.redis.json().get(client_id, '.active')
+            await self.UserLogger.log("CHECK_ACTIVE", None, client_id)
+        except aioredis.RedisError as e:
+            await self.UserLogger.log("CHECK_ACTIVE", e)
+            raise e
+        
+        return client_active
+    
+    async def status(self, client_id: str, active: bool) -> bool:
+        """Activate a client
+        
+        Args:
+            client_id (str): UUID of the client
+            active (bool): True to activate the client, False to deactivate it
+        
+        Returns:
+            bool: True if the client status was change successfully, False otherwise
+        """
+        
+        changed: bool = False
+        
+        try:
+            await self.redis.json().set(client_id, '.active', active)
+            await self.UserLogger.log("ACTIVATE", None, client_id)
+            changed = True
+        except aioredis.RedisError as e:
+            await self.UserLogger.log("ACTIVATE", e)
+            raise e
+        
+        return changed
+    
+    async def ban_token(self, token: str) -> bool:
+        """Ban a token
+
+        Args:
+            token (str): Token to ban
+
+        Returns:
+            bool: True if the token was banned successfully, False otherwise
+        """
+        
+        banned: bool = False
+        
+        try:
+            await self.redis_tokens.set(token, '')
+            await self.UserLogger.log("BAN_TOKEN", None, token)
+            banned = True
+        except aioredis.RedisError as e:
+            await self.UserLogger.log("BAN_TOKEN", e)
+            raise e
+        
+        return banned
+    
+    async def is_token_banned(self, token: str) -> bool:
+        """Check if a token is banned
+
+        Args:
+            token (str): Token to check
+
+        Returns:
+            bool: True if the token is banned, False otherwise
+        """
+        
+        banned: bool = True
+        
+        try:
+            banned = await self.redis_tokens.exists(token)
+            await self.UserLogger.log("CHECK_TOKEN", None, token)
+        except aioredis.RedisError as e:
+            await self.UserLogger.log("CHECK_TOKEN", e)
+            raise e
+        
+        return banned
+    
+    async def auth_checks(self, client_id: str, token: str) -> bool:
+        """Check if a client exists, is active and the token isn't banned
+
+        Args:
+            client_id (str): UUID of the client
+            secret (str): Secret of the client
+
+        Returns:
+            bool: True if the client exists, is active
+            and the token isn't banned, False otherwise
+        """
+
+        if await self.exists(client_id):
+            if await self.is_active(client_id):
+                if not await self.is_token_banned(token):
+                    return True
+                else:
+                    return False
+            else:
+                if not await self.is_token_banned(token):
+                    await self.ban_token(token)
+                    return False
+        else:
+            await self.ban_token(token)
+            return False
+        
+        return False

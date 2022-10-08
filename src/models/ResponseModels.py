@@ -78,3 +78,13 @@ class ClientTokenRefreshResponse(BaseModel):
     """
     
     access_token: str
+
+class ClientStatusResponse(BaseModel):
+    """Implements the response fields for client status.
+
+    Args:
+        BaseModel (pydantic.BaseModel): BaseModel from pydantic
+    """
+    
+    id: str
+    active: bool

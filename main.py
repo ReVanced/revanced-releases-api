@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import os
 import toml
 import sentry_sdk
 
@@ -38,11 +39,11 @@ import src.utils.Logger as Logger
 
 # Enable sentry logging
 
-# sentry_sdk.init(os.environ['SENTRY_DSN'], traces_sample_rate=1.0, integrations=[
-#         RedisIntegration(),
-#         HttpxIntegration(),
-#         GnuBacktraceIntegration(),
-#     ],)
+sentry_sdk.init(os.environ['SENTRY_DSN'], traces_sample_rate=1.0, integrations=[
+        RedisIntegration(),
+        HttpxIntegration(),
+        GnuBacktraceIntegration(),
+    ],)
 
 """Get latest ReVanced releases from GitHub API."""
 
@@ -95,7 +96,8 @@ def authpaseto_exception_handler(request: Request, exc: AuthPASETOException):
 
 # Routes
 
-@app.get("/", response_class=RedirectResponse, status_code=status.HTTP_301_MOVED_PERMANENTLY, tags=['Root'])
+@app.get("/", response_class=RedirectResponse,
+         status_code=status.HTTP_301_MOVED_PERMANENTLY, tags=['Root'])
 @limiter.limit(config['slowapi']['limit'])
 async def root(request: Request, response: Response) -> RedirectResponse:
     """Brings up API documentation
@@ -141,79 +143,170 @@ async def contributors(request: Request, response: Response) -> dict:
 
 @app.post('/client', response_model=ClientModels.ClientModel, status_code=status.HTTP_201_CREATED, tags=['Clients'])
 @limiter.limit(config['slowapi']['limit'])
-async def create_client(request: Request, response: Response, admin: bool | None = False) -> ClientModels.ClientModel:
+async def create_client(request: Request, response: Response, admin: bool | None = False, Authorize: AuthPASETO = Depends()) -> ClientModels.ClientModel:
     """Create a new API client.
 
     Returns:
         json: client information
     """
-    client: ClientModels.ClientModel =  await clients.generate(admin=admin)
     
-    await clients.store(client)
+    Authorize.paseto_required()
     
-    return client
+    admin_claim: dict[str, bool] = {"admin": False}
+    
+    current_user: str | int | None = Authorize.get_subject()
+
+    if 'admin' in Authorize.get_token_payload():
+        admin_claim = {"admin": Authorize.get_token_payload()['admin']}
+    
+    if ( await clients.auth_checks(Authorize.get_subject(), Authorize.get_jti()) and 
+        admin_claim['admin'] == True):
+        
+        client: ClientModels.ClientModel =  await clients.generate(admin=admin)
+        await clients.store(client)
+        
+        return client
+    else:
+        raise HTTPException(status_code=401, detail={
+            "error": GeneralErrors.Unauthorized().error,
+            "message": GeneralErrors.Unauthorized().message
+            }
+                            )
+    
 
 @app.delete('/client/{client_id}', response_model=ResponseModels.ClientDeletedResponse, status_code=status.HTTP_200_OK, tags=['Clients'])
 @limiter.limit(config['slowapi']['limit'])
-async def delete_client(request: Request, response: Response, client_id: str = None) -> dict:
+async def delete_client(request: Request, response: Response, client_id: str, Authorize: AuthPASETO = Depends()) -> dict:
     """Delete an API client.
 
     Returns:
         json: deletion status
     """
     
-    if not client_id:
-        raise HTTPException(status_code=400, detail={
-            "error": GeneralErrors.IdNotProvided().error,
-            "message": GeneralErrors.IdNotProvided().message
-            }
-                            )
+    Authorize.paseto_required()
+    
+    admin_claim: dict[str, bool] = {"admin": False}
+    
+    current_user: str | int | None = Authorize.get_subject()
+
+    if 'admin' in Authorize.get_token_payload():
+        admin_claim = {"admin": Authorize.get_token_payload()['admin']}
         
-    if await clients.exists(client_id):
-        return {"id": client_id, "deleted": await clients.delete(client_id)}
+    if ( await clients.auth_checks(Authorize.get_subject(), Authorize.get_jti()) and 
+        ( admin_claim['admin'] == True or 
+         current_user == client_id ) ):
+        
+        if await clients.exists(client_id):
+            return {"id": client_id, "deleted": await clients.delete(client_id)}
+        else:
+            raise HTTPException(status_code=404, detail={
+                "error": GeneralErrors.ClientNotFound().error,
+                "message": GeneralErrors.ClientNotFound().message
+                }
+                                )
     else:
-        raise HTTPException(status_code=404, detail={
-            "error": GeneralErrors.ClientNotFound().error,
-            "message": GeneralErrors.ClientNotFound().message
+        raise HTTPException(status_code=401, detail={
+            "error": GeneralErrors.Unauthorized().error,
+            "message": GeneralErrors.Unauthorized().message
             }
                             )
 
-@app.patch('/client/{client_id}', response_model=ResponseModels.ClientSecretUpdatedResponse, status_code=status.HTTP_200_OK, tags=['Clients'])
+@app.patch('/client/{client_id}/secret', response_model=ResponseModels.ClientSecretUpdatedResponse, status_code=status.HTTP_200_OK, tags=['Clients'])
 @limiter.limit(config['slowapi']['limit'])
-async def update_client(request: Request, response: Response, client_id: str = None) -> dict:
+async def update_client(request: Request, response: Response, client_id: str, Authorize: AuthPASETO = Depends()) -> dict:
     """Update an API client's secret.
 
     Returns:
         json: client ID and secret
     """
-    if not client_id:
-        raise HTTPException(status_code=400, detail={
-            "error": GeneralErrors.IdNotProvided().error,
-            "message": GeneralErrors.IdNotProvided().message
-            }
-                            )
+    
+    Authorize.paseto_required()
+    
+    admin_claim: dict[str, bool] = {"admin": False}
+    
+    current_user: str | int | None = Authorize.get_subject()
+
+    if 'admin' in Authorize.get_token_payload():
+        admin_claim = {"admin": Authorize.get_token_payload()['admin']}
         
-    if await clients.exists(client_id):
-        new_secret: str = await generators.generate_secret()
+    if ( await clients.auth_checks(Authorize.get_subject(), Authorize.get_jti()) and 
+        ( admin_claim['admin'] == True or 
+         current_user == client_id ) ):
         
-        if await clients.update_secret(client_id, new_secret):
-            return {"id": client_id, "secret": new_secret}
-        else: 
-            raise HTTPException(status_code=500, detail={
-                "error": GeneralErrors.InternalServerError().error,
-                "message": GeneralErrors.InternalServerError().message
+        if await clients.exists(client_id):
+            new_secret: str = await generators.generate_secret()
+            
+            if await clients.update_secret(client_id, new_secret):
+                return {"id": client_id, "secret": new_secret}
+            else: 
+                raise HTTPException(status_code=500, detail={
+                    "error": GeneralErrors.InternalServerError().error,
+                    "message": GeneralErrors.InternalServerError().message
+                    }
+                                    )
+        else:
+            raise HTTPException(status_code=404, detail={
+                "error": GeneralErrors.ClientNotFound().error,
+                "message": GeneralErrors.ClientNotFound().message
                 }
                                 )
     else:
-        raise HTTPException(status_code=404, detail={
-            "error": GeneralErrors.ClientNotFound().error,
-            "message": GeneralErrors.ClientNotFound().message
+        raise HTTPException(status_code=401, detail={
+            "error": GeneralErrors.Unauthorized().error,
+            "message": GeneralErrors.Unauthorized().message
             }
                             )
 
-@app.post('/announcement', response_model=AnnouncementModels.AnnouncementCreatedResponse, status_code=status.HTTP_201_CREATED, tags=['Announcements'])
+@app.patch('/client/{client_id}/status', response_model=ResponseModels.ClientStatusResponse, status_code=status.HTTP_200_OK, tags=['Clients'])
+async def client_status(request: Request, response: Response, client_id: str, active: bool, Authorize: AuthPASETO = Depends()) -> dict:
+    """Activate or deactivate a client
+
+    Returns:
+        json: json response containing client ID and activation status
+    """
+    
+    Authorize.paseto_required()
+    
+    admin_claim: dict[str, bool] = {"admin": False}
+    
+    current_user: str | int | None = Authorize.get_subject()
+
+    if 'admin' in Authorize.get_token_payload():
+        admin_claim = {"admin": Authorize.get_token_payload()['admin']}
+        
+    if ( await clients.auth_checks(Authorize.get_subject(), Authorize.get_jti()) and 
+        ( admin_claim['admin'] == True or 
+         current_user == client_id ) ):
+        
+        if await clients.exists(client_id):
+            if await clients.status(client_id, active):
+                return {"id": client_id, "active": active}
+            else: 
+                raise HTTPException(status_code=500, detail={
+                    "error": GeneralErrors.InternalServerError().error,
+                    "message": GeneralErrors.InternalServerError().message
+                    }
+                                    )
+        else:
+            raise HTTPException(status_code=404, detail={
+                "error": GeneralErrors.ClientNotFound().error,
+                "message": GeneralErrors.ClientNotFound().message
+                }
+                                )
+    else:
+        raise HTTPException(status_code=401, detail={
+            "error": GeneralErrors.Unauthorized().error,
+            "message": GeneralErrors.Unauthorized().message
+            }
+                            )
+    
+
+@app.post('/announcement', response_model=AnnouncementModels.AnnouncementCreatedResponse,
+          status_code=status.HTTP_201_CREATED, tags=['Announcements'])
 @limiter.limit(config['slowapi']['limit'])
-async def create_announcement(request: Request, response: Response, announcement: AnnouncementModels.AnnouncementCreateModel, Authorize: AuthPASETO = Depends()) -> dict:
+async def create_announcement(request: Request, response: Response,
+                              announcement: AnnouncementModels.AnnouncementCreateModel,
+                              Authorize: AuthPASETO = Depends()) -> dict:
     """Create a new announcement.
 
     Returns:
@@ -221,14 +314,21 @@ async def create_announcement(request: Request, response: Response, announcement
     """
     Authorize.paseto_required()
     
-    announcement_created: bool = await announcements.store(announcement)
-    
-    if announcement_created:
-        return {"created": announcement_created}
+    if await clients.auth_checks(Authorize.get_subject(), Authorize.get_jti()):
+        announcement_created: bool = await announcements.store(announcement)
+        
+        if announcement_created:
+            return {"created": announcement_created}
+        else:
+            raise HTTPException(status_code=500, detail={
+                "error": GeneralErrors.InternalServerError().error,
+                "message": GeneralErrors.InternalServerError().message
+                }
+                                )
     else:
-        raise HTTPException(status_code=500, detail={
-            "error": GeneralErrors.InternalServerError().error,
-            "message": GeneralErrors.InternalServerError().message
+        raise HTTPException(status_code=401, detail={
+            "error": GeneralErrors.Unauthorized().error,
+            "message": GeneralErrors.Unauthorized().message
             }
                             )
 
@@ -249,24 +349,36 @@ async def get_announcement(request: Request, response: Response) -> dict:
             }
                             )
 
-@app.delete('/announcement', response_model=AnnouncementModels.AnnouncementDeleted, status_code=status.HTTP_200_OK, tags=['Announcements'])
+@app.delete('/announcement',
+            response_model=AnnouncementModels.AnnouncementDeleted,
+            status_code=status.HTTP_200_OK, tags=['Announcements'])
 @limiter.limit(config['slowapi']['limit'])
-async def delete_announcement(request: Request, response: Response) -> dict:
+async def delete_announcement(request: Request, response: Response,
+                              Authorize: AuthPASETO = Depends()) -> dict:
     """Delete an announcement.
 
     Returns:
         json: deletion status
     """
-       
-    if await announcements.exists():
-        return {"deleted": await announcements.delete()}
-    else:
-        raise HTTPException(status_code=404, detail={
-            "error": GeneralErrors.AnnouncementNotFound().error,
-            "message": GeneralErrors.AnnouncementNotFound().message
+    
+    Authorize.paseto_required()
+    
+    if await clients.auth_checks(Authorize.get_subject(), Authorize.get_jti()):   
+        if await announcements.exists():
+            return {"deleted": await announcements.delete()}
+        else:
+            raise HTTPException(status_code=404, detail={
+                "error": GeneralErrors.AnnouncementNotFound().error,
+                "message": GeneralErrors.AnnouncementNotFound().message
+                }
+                                )
+    else: 
+        raise HTTPException(status_code=401, detail={
+            "error": GeneralErrors.Unauthorized().error,
+            "message": GeneralErrors.Unauthorized().message
             }
                             )
-
+        
 @app.post('/auth', response_model=ResponseModels.ClientAuthTokenResponse, status_code=status.HTTP_200_OK, tags=['Authentication'])
 @limiter.limit(config['slowapi']['limit'])
 async def auth(request: Request, response: Response, client: ClientModels.ClientAuthModel, Authorize: AuthPASETO = Depends()) -> dict:
@@ -294,8 +406,12 @@ async def auth(request: Request, response: Response, client: ClientModels.Client
             else:
                 admin_claim = {"admin": False}
                 
-            access_token = Authorize.create_access_token(subject=client.id, user_claims=admin_claim, fresh=True)
-            refresh_token = Authorize.create_refresh_token(subject=client.id, user_claims=admin_claim)
+            access_token = Authorize.create_access_token(subject=client.id,
+                                                         user_claims=admin_claim,
+                                                         fresh=True)
+            
+            refresh_token = Authorize.create_refresh_token(subject=client.id,
+                                                           user_claims=admin_claim)
             
             return {"access_token": access_token, "refresh_token": refresh_token}
     else:
@@ -305,9 +421,11 @@ async def auth(request: Request, response: Response, client: ClientModels.Client
             }
                             )
 
-@app.post('/refresh', response_model=ResponseModels.ClientTokenRefreshResponse, status_code=status.HTTP_200_OK, tags=['Authentication'])
+@app.post('/refresh', response_model=ResponseModels.ClientTokenRefreshResponse,
+          status_code=status.HTTP_200_OK, tags=['Authentication'])
 @limiter.limit(config['slowapi']['limit'])
-async def refresh(request: Request, response: Response, Authorize: AuthPASETO = Depends()) -> dict:
+async def refresh(request: Request, response: Response,
+                  Authorize: AuthPASETO = Depends()) -> dict:
     """Refresh an auth token.
     
     Returns:
@@ -323,31 +441,18 @@ async def refresh(request: Request, response: Response, Authorize: AuthPASETO = 
     if 'admin' in Authorize.get_token_payload():
         admin_claim = {"admin": Authorize.get_token_payload()['admin']}
     
-    return {"access_token": Authorize.create_access_token(subject=current_user, user_claims=admin_claim, fresh=False)}
-
-@app.get("/claims")
-def user(Authorize: AuthPASETO = Depends()):
-    Authorize.paseto_required()
-
-    foo_claims = Authorize.get_token_payload()["admin"]
-    return {"admin": foo_claims}
-
-@app.head('/ping', status_code=status.HTTP_204_NO_CONTENT, tags=['Misc'])
-@limiter.limit(config['slowapi']['limit'])
-async def ping(request: Request, response: Response) -> None:
-    """Check if the API is running.
-
-    Returns:
-        None
-    """
-    return None
+    return {"access_token": Authorize.create_access_token(subject=current_user,
+                                                          user_claims=admin_claim,
+                                                          fresh=False)}
 
 @app.on_event("startup")
 async def startup() -> None:
-    FastAPICache.init(RedisBackend(RedisConnector.connect(config['cache']['database'])), prefix="fastapi-cache")
+    FastAPICache.init(RedisBackend(RedisConnector.connect(config['cache']['database'])),
+                      prefix="fastapi-cache")
     
     return None
 
 # setup right before running to make sure no other library overwrites it
 
-Logger.setup_logging(LOG_LEVEL=config["logging"]["level"], JSON_LOGS=config["logging"]["json_logs"])
+Logger.setup_logging(LOG_LEVEL=config["logging"]["level"],
+                     JSON_LOGS=config["logging"]["json_logs"])

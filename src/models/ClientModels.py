@@ -10,6 +10,7 @@ class ClientModel(BaseModel):
     id: str
     secret: str
     admin: bool
+    active: bool
 
 class ClientAuthModel(BaseModel):
     """Implements the fields for client authentication.
