@@ -64,3 +64,14 @@ class ContributorsResponseFields(BaseModel):
     
     name: str
     contributors: list[ ContributorFields ]
+    
+class ChangelogsResponseFields(BaseModel):
+    """Implements the fields for the /changelogs endpoint.
+    
+    Args:
+        BaseModel (pydantic.BaseModel): BaseModel from pydantic
+    """
+    sha: str
+    author: str
+    message: str
+    html_url: str

@@ -122,7 +122,7 @@ class Releases:
         
         response = await self.httpx_client.get(f"https://api.github.com/repos/{repository}/contributors")
         
-        contributors = [keyfilter(lambda k: k in keep, contributor) for contributor in response.json()]
+        contributors: list = [keyfilter(lambda k: k in keep, contributor) for contributor in response.json()]
         
         
         return contributors
@@ -156,3 +156,60 @@ class Releases:
             await self.InternalCache.store('contributors', contributors)
         
         return contributors
+    
+    async def get_commits(self, org: str, repository: str, path: str) -> dict:
+        """Get commit history from a given repository.
+
+        Args:
+            org (str): Username of the organization | valid values: revanced or vancedapp
+            repository (str): Repository name
+            path (str): Path to the file
+            per_page (int): Number of commits to return
+            since (str): ISO 8601 timestamp
+
+        Raises:
+            Exception: Raise a generic exception if the organization is not revanced or vancedapp
+
+        Returns:
+            dict: a dictionary containing the repository's latest commits
+        """
+        
+        payload: dict = {}
+        payload["repository"] = f"{org}/{repository}"
+        payload["path"] = path
+        payload["commits"] = []
+        
+        if org == 'revanced' or org == 'vancedapp':
+            key: str = f"{org}/{repository}/{path}"
+            if await self.InternalCache.exists(key):
+                return await self.InternalCache.get(key)
+            else:
+                
+                _releases = await self.httpx_client.get(
+                    f"https://api.github.com/repos/{org}/{repository}/releases?per_page=2"
+                    )
+                
+                releases = _releases.json()
+                
+                since = releases[1]['created_at']
+                until = releases[0]['created_at']
+                
+                _response = await self.httpx_client.get(
+                    f"https://api.github.com/repos/{org}/{repository}/commits?path={path}&since={since}&until={until}"
+                    )
+                
+                response = _response.json()
+                
+                for commit in response:
+                    data: dict[str, str] = {}
+                    data["sha"] = commit["sha"]
+                    data["author"] = commit["commit"]["author"]["name"]
+                    data["message"] = commit["commit"]["message"]
+                    data["html_url"] = commit["html_url"]
+                    payload['commits'].append(data)
+                
+                await self.InternalCache.store(key, payload)
+                
+                return payload
+        else:
+            raise Exception("Invalid organization.")
