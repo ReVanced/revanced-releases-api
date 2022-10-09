@@ -88,3 +88,14 @@ class ClientStatusResponse(BaseModel):
     
     id: str
     active: bool
+    
+class ChangelogsResponseModel(BaseModel):
+    """Implements the JSON response model for the /changelogs endpoint.
+
+    Args:
+        BaseModel (pydantic.BaseModel): BaseModel from pydantic
+    """
+    
+    repository: str
+    path: str
+    commits: list[ ResponseFields.ChangelogsResponseFields ]

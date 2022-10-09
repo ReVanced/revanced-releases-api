@@ -168,6 +168,21 @@ async def contributors(request: Request, response: Response) -> dict:
     """
     return await releases.get_contributors(config['app']['repositories'])
 
+@app.get('/changelogs/{org}/{repo}', response_model=ResponseModels.ChangelogsResponseModel, tags=['ReVanced Tools'])
+@limiter.limit(config['slowapi']['limit'])
+@cache(config['cache']['expire'])
+async def changelogs(request: Request, response: Response, org: str, repo: str, path: str) -> dict:
+    """Get the latest changes from a repository.
+
+    Returns:
+        json: list of commits
+    """
+    return await releases.get_commits(
+        org=org,
+        repository=repo,
+        path=path
+        )
+
 @app.post('/client', response_model=ClientModels.ClientModel, status_code=status.HTTP_201_CREATED, tags=['Clients'])
 @limiter.limit(config['slowapi']['limit'])
 async def create_client(request: Request, response: Response, admin: bool | None = False, Authorize: AuthPASETO = Depends()) -> ClientModels.ClientModel:
