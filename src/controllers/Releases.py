@@ -1,33 +1,23 @@
-import os
+from toolz.dicttoolz import keyfilter
+import asyncio
+import uvloop
 import orjson
-import httpx_cache
 from base64 import b64decode
-from modules.utils.InternalCache import InternalCache
-import modules.utils.Logger as Logger
+from src.utils.HTTPXClient import HTTPXClient
+from src.utils.InternalCache import InternalCache
 
 
 class Releases:
     
     """Implements the methods required to get the latest releases and patches from revanced repositories."""
-
-    headers = {'Accept': "application/vnd.github+json",
-               'Authorization': "token " + os.environ['GITHUB_TOKEN']
-               }
     
-    httpx_logger = Logger.HTTPXLogger()
-    
-    httpx_client = httpx_cache.AsyncClient(
-        headers=headers,
-        http2=True,
-        event_hooks={
-            'request': [httpx_logger.log_request],
-            'response': [httpx_logger.log_response]
-            }
-        )
+    uvloop.install()
+ 
+    httpx_client = HTTPXClient.create()
     
     InternalCache = InternalCache()
     
-    async def _get_release(self, repository: str) -> list:
+    async def __get_release(self, repository: str) -> list:
         # Get assets from latest release in a given repository.
         #
         # Args:
@@ -83,16 +73,17 @@ class Releases:
             releases = {}
             releases['tools'] = []
             
-            for repository in repositories:
-                files = await self._get_release(repository)
-                if files:
-                    for file in files:
-                        releases['tools'].append(file)
+            results: list = await asyncio.gather(*[self.__get_release(repository) for repository in repositories])
+            
+            for result in results:
+                for asset in result:
+                    releases['tools'].append(asset)
+                    
             await self.InternalCache.store('releases', releases)
         
         return releases
     
-    async def _get_patches_json(self) -> dict:
+    async def __get_patches_json(self) -> dict:
         # Get revanced-patches repository's README.md.
         #
         # Returns:
@@ -113,12 +104,12 @@ class Releases:
         if await self.InternalCache.exists('patches'):
             patches = await self.InternalCache.get('patches')
         else:
-            patches = await self._get_patches_json()
+            patches = await self.__get_patches_json()
             await self.InternalCache.store('patches', patches)
         
         return patches
 
-    async def _get_contributors(self, repository: str) -> list:
+    async def __get_contributors(self, repository: str) -> list:
         # Get contributors from a given repository.
         #
         # Args:
@@ -127,9 +118,14 @@ class Releases:
         # Returns:
         #    list: a list of dictionaries containing the repository's contributors
         
+        keep: set = {'login', 'avatar_url', 'html_url'}
+        
         response = await self.httpx_client.get(f"https://api.github.com/repos/{repository}/contributors")
         
-        return response.json()
+        contributors: list = [keyfilter(lambda k: k in keep, contributor) for contributor in response.json()]
+        
+        
+        return contributors
     
     async def get_contributors(self, repositories: list) -> dict:
         """Runs get_contributors() asynchronously for each repository.
@@ -148,11 +144,72 @@ class Releases:
         else:
             contributors = {}
             contributors['repositories'] = []
-            for repository in repositories:
-                if 'revanced' in repository:
-                    repo_contributors = await self._get_contributors(repository)
-                    data = { 'name': repository, 'contributors': repo_contributors }
-                    contributors['repositories'].append(data)
+            
+            revanced_repositories = [repository for repository in repositories if 'revanced' in repository]
+            
+            results: list[dict] = await asyncio.gather(*[self.__get_contributors(repository) for repository in revanced_repositories])
+            
+            for key, value in zip(revanced_repositories, results):
+                data = { 'name': key, 'contributors': value }
+                contributors['repositories'].append(data)
+            
             await self.InternalCache.store('contributors', contributors)
         
         return contributors
+    
+    async def get_commits(self, org: str, repository: str, path: str) -> dict:
+        """Get commit history from a given repository.
+
+        Args:
+            org (str): Username of the organization | valid values: revanced or vancedapp
+            repository (str): Repository name
+            path (str): Path to the file
+            per_page (int): Number of commits to return
+            since (str): ISO 8601 timestamp
+
+        Raises:
+            Exception: Raise a generic exception if the organization is not revanced or vancedapp
+
+        Returns:
+            dict: a dictionary containing the repository's latest commits
+        """
+        
+        payload: dict = {}
+        payload["repository"] = f"{org}/{repository}"
+        payload["path"] = path
+        payload["commits"] = []
+        
+        if org == 'revanced' or org == 'vancedapp':
+            key: str = f"{org}/{repository}/{path}"
+            if await self.InternalCache.exists(key):
+                return await self.InternalCache.get(key)
+            else:
+                
+                _releases = await self.httpx_client.get(
+                    f"https://api.github.com/repos/{org}/{repository}/releases?per_page=2"
+                    )
+                
+                releases = _releases.json()
+                
+                since = releases[1]['created_at']
+                until = releases[0]['created_at']
+                
+                _response = await self.httpx_client.get(
+                    f"https://api.github.com/repos/{org}/{repository}/commits?path={path}&since={since}&until={until}"
+                    )
+                
+                response = _response.json()
+                
+                for commit in response:
+                    data: dict[str, str] = {}
+                    data["sha"] = commit["sha"]
+                    data["author"] = commit["commit"]["author"]["name"]
+                    data["message"] = commit["commit"]["message"]
+                    data["html_url"] = commit["html_url"]
+                    payload['commits'].append(data)
+                
+                await self.InternalCache.store(key, payload)
+                
+                return payload
+        else:
+            raise Exception("Invalid organization.")

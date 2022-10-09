@@ -153,3 +153,4 @@ cython_debug/
 
 # PROJECT SPECIFIC
 setup_env.sh
+admin_info.json
