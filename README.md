@@ -8,7 +8,7 @@ This is a simple API that returns the latest ReVanced releases, patches and cont
 
 ## Usage
 
-The API is available at [https://revanced-releases-api.afterst0rm.xyz/](https://revanced-releases-api.afterst0rm.xyz/).
+The API is available at [https://releases.rvcd.win/](https://releases.rvcd.win/).
 
 You can deploy your own instance by cloning this repository, editing the `docker-compose.yml` file to include your GitHub token and running `docker-compose up` or `docker-compose up --build` if you want to build the image locally instead of pulling from GHCR. Optionally you can run the application without Docker by running `poetry install` and `poetry run ./run.sh`. In this case, you'll also need a redis server and setup the following environment variables on your system.
 
@@ -28,9 +28,9 @@ If you don't have a Sentry instance, we recommend using [GlitchTip](https://glit
 
 ### API Endpoints
 
-* [tools](https://revanced-releases-api.afterst0rm.xyz/tools) - Returns the latest version of all ReVanced tools and Vanced MicroG
-* [patches](https://revanced-releases-api.afterst0rm.xyz/patches) - Returns the latest version of all ReVanced patches
-* [contributors](https://revanced-releases-api.afterst0rm.xyz/contributors) - Returns contributors for all ReVanced projects
+* [tools](https://releases.rvcd.win/tools) - Returns the latest version of all ReVanced tools and Vanced MicroG
+* [patches](https://releases.rvcd.win/patches) - Returns the latest version of all ReVanced patches
+* [contributors](https://releases.rvcd.win/contributors) - Returns contributors for all ReVanced projects
 
 ## Contributing
 
