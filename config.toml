@@ -24,28 +24,23 @@ The team also have a [Discord Server](https://revanced.app/discord) if you need 
 Godspeed 💀
 
 """
-version = "0.8 RC"
+version = "0.8.5 RC"
 
 [license]
 
 name = "AGPL-3.0"
 url = "https://www.gnu.org/licenses/agpl-3.0.en.html"
 
-[slowapi]
-
-limit = "60/minute"
-
 [logging]
-
 level = "INFO"
 json_logs = false
 
 [cache]
-expire = 120
+expire = 300
 database = 0
 
-[internal-cache]
-expire = 300
+[slowapi]
+limit = "60/minute"
 database = 1
 
 [clients]
