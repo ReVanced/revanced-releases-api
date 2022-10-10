@@ -134,7 +134,7 @@ python-versions = ">=3.6"
 cffi = ">=1.12"
 
 [package.extras]
-docs = ["sphinx (>=1.6.5,!=1.8.0,!=3.1.0,!=3.1.1)", "sphinx-rtd-theme"]
+docs = ["sphinx (>=1.6.5,!=1.8.0,!=3.1.0,!=3.1.1)", "sphinx_rtd_theme"]
 docstest = ["pyenchant (>=1.6.11)", "sphinxcontrib-spelling (>=4.0.1)", "twine (>=1.12.0)"]
 pep8test = ["black", "flake8", "flake8-import-order", "pep8-naming"]
 sdist = ["setuptools_rust (>=0.11.4)"]
@@ -167,7 +167,7 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 wrapt = ">=1.10,<2"
 
 [package.extras]
-dev = ["PyTest (<5)", "PyTest-Cov (<2.6)", "bump2version (<1)", "configparser (<5)", "importlib-metadata (<3)", "importlib-resources (<4)", "pytest", "pytest-cov", "sphinx (<2)", "sphinxcontrib-websupport (<2)", "tox", "zipp (<2)"]
+dev = ["PyTest", "PyTest (<5)", "PyTest-Cov", "PyTest-Cov (<2.6)", "bump2version (<1)", "configparser (<5)", "importlib-metadata (<3)", "importlib-resources (<4)", "sphinx (<2)", "sphinxcontrib-websupport (<2)", "tox", "zipp (<2)"]
 
 [[package]]
 name = "fastapi"
@@ -309,7 +309,7 @@ socks = ["socksio (>=1.0.0,<2.0.0)"]
 
 [[package]]
 name = "httpx-cache"
-version = "0.6.0"
+version = "0.6.1"
 description = "Simple caching transport for httpx."
 category = "main"
 optional = false
@@ -340,7 +340,7 @@ uvloop = {version = "*", optional = true, markers = "platform_system != \"Window
 wsproto = ">=0.14.0"
 
 [package.extras]
-docs = ["pydata-sphinx-theme"]
+docs = ["pydata_sphinx_theme"]
 h3 = ["aioquic (>=0.9.0,<1.0)"]
 trio = ["trio (>=0.11.0)"]
 uvloop = ["uvloop"]
@@ -1119,8 +1119,8 @@ httpx = [
     {file = "httpx-0.23.0.tar.gz", hash = "sha256:f28eac771ec9eb4866d3fb4ab65abd42d38c424739e80c08d8d20570de60b0ef"},
 ]
 httpx-cache = [
-    {file = "httpx-cache-0.6.0.tar.gz", hash = "sha256:3d136ad207d8004e59a69283aa6fc40e1190dad5edbde5859b37778f6d1ecdbf"},
-    {file = "httpx_cache-0.6.0-py3-none-any.whl", hash = "sha256:2b548d68fa55159e2fdc49ea151f513217c21cb4f0057e79fec8376ce15bfe7a"},
+    {file = "httpx-cache-0.6.1.tar.gz", hash = "sha256:699f648e781f6d06c9f50fa398f7ae30fe5b7668711975760d277f14c601d124"},
+    {file = "httpx_cache-0.6.1-py3-none-any.whl", hash = "sha256:b468b9f3d8d8063d3a0f401401cfd5237e37721f975c436598e4e62fd1f5685c"},
 ]
 hypercorn = [
     {file = "Hypercorn-0.14.3-py3-none-any.whl", hash = "sha256:7c491d5184f28ee960dcdc14ab45d14633ca79d72ddd13cf4fcb4cb854d679ab"},
