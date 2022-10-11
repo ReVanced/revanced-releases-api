@@ -20,4 +20,4 @@ RUN apt update && \
     apt-get install build-essential libffi-dev -y \
     && pip install --no-cache-dir -r requirements.txt
 
-CMD [ "/bin/bash", "./run.sh" ]
+CMD [ "python3", "./run.py" ]

@@ -7,6 +7,7 @@ from app.main import app
 from loguru import logger
 from types import FrameType
 from typing import Any, Optional
+from multiprocessing import cpu_count
 from gunicorn.glogging import Logger
 from gunicorn.app.base import BaseApplication
 from sentry_sdk.integrations.redis import RedisIntegration
@@ -25,10 +26,15 @@ sentry_sdk.init(os.environ['SENTRY_DSN'], traces_sample_rate=1.0, integrations=[
 
 LOG_LEVEL: Any = logging.getLevelName(config['logging']['level'])
 JSON_LOGS: bool = config['logging']['json_logs']
-WORKERS: int = int(os.environ.get("CORES", "1"))
+WORKERS: int = int(cpu_count() * 2 + 1)
 BIND: str = f'{os.environ.get("HYPERCORN_HOST")}:{os.environ.get("HYPERCORN_PORT")}'
 
 class InterceptHandler(logging.Handler):
+    """Intercept logs and forward them to Loguru.
+
+    Args:
+        logging.Handler (Filterer): Handler to filter logs
+    """
     def emit(self, record):
         # Get corresponding Loguru level if it exists
         
@@ -51,6 +57,11 @@ class InterceptHandler(logging.Handler):
 
 
 class StubbedGunicornLogger(Logger):
+    """Defining a custom logger class to prevent gunicorn from logging to stdout
+
+    Args:
+        Logger (object): Gunicon logger class
+    """
     def setup(self, cfg):
         handler = logging.NullHandler()
         self.error_logger = logging.getLogger("gunicorn.error")
@@ -62,7 +73,11 @@ class StubbedGunicornLogger(Logger):
 
 
 class StandaloneApplication(BaseApplication):
-    """Our Gunicorn application."""
+    """Defines a Guicorn application
+
+    Args:
+        BaseApplication (object): Base class for Gunicorn applications
+    """
 
     def __init__(self, app, options=None):
         self.options = options or {}
@@ -83,8 +98,6 @@ class StandaloneApplication(BaseApplication):
 
 if __name__ == '__main__':
     intercept_handler = InterceptHandler()
-    # logging.basicConfig(handlers=[intercept_handler], level=LOG_LEVEL)
-    # logging.root.handlers = [intercept_handler]
     logging.root.setLevel(LOG_LEVEL)
 
     seen = set()
