@@ -811,7 +811,7 @@ h11 = ">=0.9.0,<1"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10"
-content-hash = "4ec609cb0b41fe6ad845bd3cab57e3061cdbb8cf579d974ca56ce163b58d3ad0"
+content-hash = "424ef1ced5a48b1e652aefa77c0629df286a1f66d6d9286584b46dbac57e80ea"
 
 [metadata.files]
 aiofiles = [

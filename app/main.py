@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
-import binascii
 import os
 import toml
+import binascii
 
 from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse, UJSONResponse
@@ -26,14 +26,14 @@ from app.utils.RedisConnector import RedisConnector
 import app.models.GeneralErrors as GeneralErrors
 
 from app.routers import root
-from app.routers import tools
-from app.routers import patches
-from app.routers import contributors
-from app.routers import changelogs
 from app.routers import ping
 from app.routers import auth
-from app.routers import announcement
+from app.routers import tools
 from app.routers import clients
+from app.routers import patches
+from app.routers import changelogs
+from app.routers import contributors
+from app.routers import announcement
 
 """Get latest ReVanced releases from GitHub API."""
 
@@ -80,28 +80,65 @@ app.include_router(ping.router)
 
 @cache()
 async def get_cache() -> int:
+    """Get cache TTL from config.
+
+    Returns:
+        int: Cache TTL
+    """
     return 1
 
 # Setup PASETO
 
 @AuthPASETO.load_config
-def get_config():
+def get_config() -> Auth.PasetoSettings:
+    """Get PASETO config from Auth module
+
+    Returns:
+        PasetoSettings: PASETO config
+    """
     return Auth.PasetoSettings()
 
 # Setup custom error handlers
 
 @app.exception_handler(AuthPASETOException)
-async def authpaseto_exception_handler(request: Request, exc: AuthPASETOException):
+async def authpaseto_exception_handler(request: Request, exc: AuthPASETOException) -> JSONResponse:
+    """Handle AuthPASETOException
+
+    Args:
+        request (Request): Request
+        exc (AuthPASETOException): Exception
+
+    Returns:
+        JSONResponse: Response
+    """
     return JSONResponse(status_code=exc.status_code, content={"detail": exc.message})
 
 @app.exception_handler(AttributeError)
-async def validation_exception_handler(request, exc):
+async def validation_exception_handler(request, exc) -> JSONResponse:
+    """Handle AttributeError
+
+    Args:
+        request (Request): Request
+        exc (AttributeError): Exception
+
+    Returns:
+        JSONResponse: Response
+    """
     return JSONResponse(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, content={
         "error": "Unprocessable Entity"
         })
 
 @app.exception_handler(binascii.Error)
-async def invalid_token_exception_handler(request, exc):
+async def invalid_token_exception_handler(request, exc) -> JSONResponse:
+    """Handle binascii.Error
+
+    Args:
+        request (Request): Request
+        exc (binascii.Error): Exception
+
+    Returns:
+        JSONResponse: Response
+    """
     return JSONResponse(status_code=status.HTTP_401_UNAUTHORIZED, content={
         "error": GeneralErrors.Unauthorized().error,
         "message": GeneralErrors.Unauthorized().message
@@ -109,6 +146,8 @@ async def invalid_token_exception_handler(request, exc):
 
 @app.on_event("startup")
 async def startup() -> None:
+    """Startup event handler"""
+    
     clients = Clients()
     await clients.setup_admin()
     FastAPICache.init(RedisBackend(RedisConnector.connect(config['cache']['database'])),
