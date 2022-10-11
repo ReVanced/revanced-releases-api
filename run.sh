@@ -7,6 +7,4 @@
 CORES=$(grep -c ^processor /proc/cpuinfo)
 
 # Start the application
-hypercorn main:app --bind="${HYPERCORN_HOST}:${HYPERCORN_PORT}" \
---workers="$CORES" --log-level="$HYPERCORN_LOG_LEVEL" \
---worker-class uvloop
+python3 ./run.py
