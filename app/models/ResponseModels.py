@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-import src.models.ResponseFields as ResponseFields
+import app.models.ResponseFields as ResponseFields
 
 """Implements pydantic models and model generator for the API's responses."""
 
