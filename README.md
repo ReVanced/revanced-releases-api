@@ -19,7 +19,6 @@ You can deploy your own instance by cloning this repository, editing the `docker
 | `REDIS_PORT`           | The port of your redis server.        |
 | `HYPERCORN_HOST`       | The hostname/IP of the API.           |
 | `HYPERCORN_PORT`       | The port of the API.                  |
-| `HYPERCORN_LOG_LEVEL`  | The log level of the API.             |
 | `SENTRY_DSN`           | The DSN of your Sentry instance.      |
 
 Please note that there are no default values for any of these variables.

@@ -2,50 +2,44 @@
 
 title = "ReVanced Releases API"
 description = """
-This website provides a JSON API for ReVanced Releases 🚀
+## The official JSON API for ReVanced Releases 🚀
 
-Changelogs are not included but can be found on the [ReVanced Repositories](https://github.com/revanced/).
+### Links
 
-The team also have a [Discord Server](https://revanced.app/discord) if you need help.
+- [Changelogs](https://github.com/revanced/)
+- [Official links to ReVanced](https://revanced.app)
 
-## Important Information
+### Important Information
 
 * Rate Limiting - 60 requests per minute
 * Cache - 5 minutes
 * Token duration - 1 hour
 * Token refresh - 30 days
 
-## Additional Notes
+### Additional Notes
 
-1. Although we will try to avoid breaking changes, we can't guarantee that it won't happen.
-2. Make sure to implement a cache system on your end to avoid unnecessary requests.
-3. API abuse will result in IP blocks.
-
-Godspeed 💀
+1. Breaking changes are to be expected
+2. Client side caching is adviced to avoid unnecessary requests
+3. Abuse of the API will result in IP blocks
 
 """
-version = "0.8 RC"
+version = "0.9 RC2"
 
 [license]
 
 name = "AGPL-3.0"
 url = "https://www.gnu.org/licenses/agpl-3.0.en.html"
 
-[slowapi]
-
-limit = "60/minute"
-
 [logging]
-
 level = "INFO"
 json_logs = false
 
 [cache]
-expire = 120
+expire = 300
 database = 0
 
-[internal-cache]
-expire = 300
+[slowapi]
+limit = "60/minute"
 database = 1
 
 [clients]
@@ -56,6 +50,9 @@ database = 3
 
 [announcements]
 database = 4
+
+[mirrors]
+database = 5
 
 [app]
 

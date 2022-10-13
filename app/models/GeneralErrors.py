@@ -49,3 +49,23 @@ class Unauthorized(BaseModel):
     
     error: str = "Unauthorized"
     message: str = "The client is unauthorized to access this resource"
+    
+class MirrorNotFoundError(BaseModel):
+    """Implements the response fields for when a mirror is not found.
+
+    Args:
+        BaseModel (pydantic.BaseModel): BaseModel from pydantic
+    """
+    
+    error: str = "Not Found"
+    message: str = "No mirror was found for the organization, repository, and version provided."
+    
+class MirrorAlreadyExistsError(BaseModel):
+    """Implements the response fields for when a mirror already exists.
+
+    Args:
+        BaseModel (pydantic.BaseModel): BaseModel from pydantic
+    """
+    
+    error: str = "Conflict"
+    message: str = "A mirror already exists for the organization, repository, and version provided. Please use the PUT method to update the mirror."

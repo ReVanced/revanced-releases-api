@@ -7,10 +7,10 @@ from redis import asyncio as aioredis
 import aiofiles
 import uvloop
 
-import src.utils.Logger as Logger
-from src.utils.Generators import Generators
-from src.models.ClientModels import ClientModel
-from src.utils.RedisConnector import RedisConnector
+import app.utils.Logger as Logger
+from app.utils.Generators import Generators
+from app.models.ClientModels import ClientModel
+from app.utils.RedisConnector import RedisConnector
 
 config: dict = toml.load("config.toml")
 

@@ -1,6 +1,6 @@
 import os
 import httpx_cache
-import src.utils.Logger as Logger
+import app.utils.Logger as Logger
 
 class HTTPXClient:
     
