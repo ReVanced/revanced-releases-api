@@ -1,5 +1,3 @@
-import sys
-import logging
 from loguru import logger
 from redis import RedisError
 from argon2.exceptions import VerifyMismatchError
@@ -66,19 +64,15 @@ class AnnouncementsLogger:
         else:
             logger.info(f"[User] REDIS {operation} {key} - OK")
 
-def setup_logging(LOG_LEVEL: str, JSON_LOGS: bool) -> None:
-    
-    """Setup logging for uvicorn and FastAPI."""
-    
-    # intercept everything at the root logger
-    logging.root.handlers = [InterceptHandler()]
-    logging.root.setLevel(LOG_LEVEL)
-
-    # remove every other logger's handlers
-    # and propagate to root logger
-    for name in logging.root.manager.loggerDict.keys():
-        logging.getLogger(name).handlers = []
-        logging.getLogger(name).propagate = True
-
-    # configure loguru
-    logger.configure(handlers=[{"sink": sys.stdout, "serialize": JSON_LOGS}])
+class MirrorsLogger:
+    async def log(self, operation: str, result: RedisError | None = None, key: str = "") -> None:
+        """Logs internal cache operations
+        
+        Args:
+            operation (str): Operation name
+            key (str): Key used in the operation
+        """
+        if type(result) is RedisError:
+            logger.error(f"[User] REDIS {operation} - Failed with error: {result}")
+        else:
+            logger.info(f"[User] REDIS {operation} {key} - OK")
