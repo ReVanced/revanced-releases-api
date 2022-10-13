@@ -31,6 +31,7 @@ from app.routers import auth
 from app.routers import tools
 from app.routers import clients
 from app.routers import patches
+from app.routers import mirrors
 from app.routers import changelogs
 from app.routers import contributors
 from app.routers import announcement
@@ -74,6 +75,7 @@ app.include_router(changelogs.router)
 app.include_router(auth.router)
 app.include_router(clients.router)
 app.include_router(announcement.router)
+app.include_router(mirrors.router)
 app.include_router(ping.router)
 
 # Setup cache
