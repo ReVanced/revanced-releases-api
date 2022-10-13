@@ -2,21 +2,21 @@
 
 title = "ReVanced Releases API"
 description = """
-# The official JSON API for ReVanced Releases 🚀
+## The official JSON API for ReVanced Releases 🚀
 
-## Links
+### Links
 
 - [Changelogs](https://github.com/revanced/)
 - [Official links to ReVanced](https://revanced.app)
 
-## Important Information
+### Important Information
 
 * Rate Limiting - 60 requests per minute
 * Cache - 5 minutes
 * Token duration - 1 hour
 * Token refresh - 30 days
 
-## Additional Notes
+### Additional Notes
 
 1. Breaking changes are to be expected
 2. Client side caching is adviced to avoid unnecessary requests
