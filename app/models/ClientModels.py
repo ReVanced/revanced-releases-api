@@ -21,4 +21,3 @@ class ClientAuthModel(BaseModel):
     
     id: str
     secret: str
-    
