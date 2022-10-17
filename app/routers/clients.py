@@ -128,7 +128,7 @@ async def update_client(request: Request, response: Response, client_id: str, Au
             }
                             )
 
-@router.patch('/client/{client_id}/status', response_model=ResponseModels.ClientStatusResponse, status_code=status.HTTP_200_OK)
+@router.patch('/{client_id}/status', response_model=ResponseModels.ClientStatusResponse, status_code=status.HTTP_200_OK)
 async def client_status(request: Request, response: Response, client_id: str, active: bool, Authorize: AuthPASETO = Depends()) -> dict:
     """Activate or deactivate a client
 
@@ -144,11 +144,11 @@ async def client_status(request: Request, response: Response, client_id: str, ac
 
     if 'admin' in Authorize.get_token_payload():
         admin_claim = {"admin": Authorize.get_token_payload()['admin']}
-        
+        print("admin claim: ", admin_claim)
     if ( await clients.auth_checks(Authorize.get_subject(), Authorize.get_jti()) and 
         ( admin_claim['admin'] == True or 
          current_user == client_id ) ):
-        
+        print("client exists")
         if await clients.exists(client_id):
             if await clients.status(client_id, active):
                 return {"id": client_id, "active": active}
@@ -159,6 +159,7 @@ async def client_status(request: Request, response: Response, client_id: str, ac
                     }
                                     )
         else:
+            print("Client does not exist")
             raise HTTPException(status_code=404, detail={
                 "error": GeneralErrors.ClientNotFound().error,
                 "message": GeneralErrors.ClientNotFound().message

@@ -60,9 +60,9 @@ class AnnouncementsLogger:
             key (str): Key used in the operation
         """
         if type(result) is RedisError:
-            logger.error(f"[User] REDIS {operation} - Failed with error: {result}")
+            logger.error(f"[ANNOUNCEMENT] REDIS {operation} - Failed with error: {result}")
         else:
-            logger.info(f"[User] REDIS {operation} {key} - OK")
+            logger.info(f"[ANNOUNCEMENT] REDIS {operation} {key} - OK")
 
 class MirrorsLogger:
     async def log(self, operation: str, result: RedisError | None = None, key: str = "") -> None:
@@ -73,6 +73,6 @@ class MirrorsLogger:
             key (str): Key used in the operation
         """
         if type(result) is RedisError:
-            logger.error(f"[User] REDIS {operation} - Failed with error: {result}")
+            logger.error(f"[MIRRORS] REDIS {operation} - Failed with error: {result}")
         else:
-            logger.info(f"[User] REDIS {operation} {key} - OK")
+            logger.info(f"[MIRRORS] REDIS {operation} {key} - OK")
