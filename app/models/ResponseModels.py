@@ -68,7 +68,6 @@ class ClientAuthTokenResponse(BaseModel):
     """
     
     access_token: str
-    refresh_token: str
 
 class ClientTokenRefreshResponse(BaseModel):
     """Implements the response fields for client token refresh.
