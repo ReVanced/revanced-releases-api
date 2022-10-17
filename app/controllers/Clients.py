@@ -266,32 +266,17 @@ class Clients:
         banned: bool = False
         
         try:
-            await self.redis_tokens.set(token, '')
+            if type(config['auth']['access_token_expires']) is bool:
+                await self.redis_tokens.set(name=token, value="", nx=True)
+            else:
+                await self.redis_tokens.set(name=token,
+                                            value="",
+                                            nx=True,
+                                            ex=config['auth']['access_token_expires'])
             await self.UserLogger.log("BAN_TOKEN", None, token)
             banned = True
         except aioredis.RedisError as e:
             await self.UserLogger.log("BAN_TOKEN", e)
-            raise e
-        
-        return banned
-    
-    async def is_token_banned(self, token: str) -> bool:
-        """Check if a token is banned
-
-        Args:
-            token (str): Token to check
-
-        Returns:
-            bool: True if the token is banned, False otherwise
-        """
-        
-        banned: bool = True
-        
-        try:
-            banned = await self.redis_tokens.exists(token)
-            await self.UserLogger.log("CHECK_TOKEN", None, token)
-        except aioredis.RedisError as e:
-            await self.UserLogger.log("CHECK_TOKEN", e)
             raise e
         
         return banned
@@ -302,25 +287,19 @@ class Clients:
         Args:
             client_id (str): UUID of the client
             secret (str): Secret of the client
+            token (str): Token JTI
 
         Returns:
             bool: True if the client exists, is active
             and the token isn't banned, False otherwise
         """
 
-        if await self.exists(client_id):
-            if await self.is_active(client_id):
-                if not await self.is_token_banned(token):
-                    return True
-                else:
-                    return False
-            else:
-                if not await self.is_token_banned(token):
-                    await self.ban_token(token)
-                    return False
+        if await self.exists(client_id) and await self.is_active(client_id):
+                return True
         else:
-            await self.ban_token(token)
-            return False
+            if not await self.redis_tokens.exists(token):
+                await self.ban_token(token)
+                return False
         
         return False
     

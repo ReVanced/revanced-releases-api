@@ -98,3 +98,12 @@ class ChangelogsResponseModel(BaseModel):
     repository: str
     path: str
     commits: list[ ResponseFields.ChangelogsResponseFields ]
+    
+class RevokedTokenResponse(BaseModel):
+    """Implements the response fields for token invalidation.
+
+    Args:
+        BaseModel (pydantic.BaseModel): BaseModel from pydantic
+    """
+    
+    revoked: bool
