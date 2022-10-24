@@ -723,7 +723,7 @@ python-versions = ">=3.5"
 
 [[package]]
 name = "types-redis"
-version = "4.3.21.2"
+version = "4.3.21.3"
 description = "Typing stubs for redis"
 category = "dev"
 optional = false
@@ -1478,8 +1478,8 @@ toolz = [
     {file = "toolz-0.12.0.tar.gz", hash = "sha256:88c570861c440ee3f2f6037c4654613228ff40c93a6c25e0eba70d17282c6194"},
 ]
 types-redis = [
-    {file = "types-redis-4.3.21.2.tar.gz", hash = "sha256:ab542249a47d3903b94162e6395ae6be0cc0f562fd184ed51a0a34d8a7021a39"},
-    {file = "types_redis-4.3.21.2-py3-none-any.whl", hash = "sha256:eda5fd9e80f453143902db5547ca6506a3af44476ad080db7d18840da532ab19"},
+    {file = "types-redis-4.3.21.3.tar.gz", hash = "sha256:2e1f184056188c8754ded0b5173dc01824d2bfe41975fe318068a68beedfb62c"},
+    {file = "types_redis-4.3.21.3-py3-none-any.whl", hash = "sha256:77ee5b8ca3a779e09807348c7f0b33c0f38a46096cd6c8a2e0176b28b3784b34"},
 ]
 types-toml = [
     {file = "types-toml-0.10.8.tar.gz", hash = "sha256:b7e7ea572308b1030dc86c3ba825c5210814c2825612ec679eb7814f8dd9295a"},
