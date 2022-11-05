@@ -19,7 +19,7 @@ jobs:
       - name: Install mypy
         run: pip install mypy
       - name: Run mypy
-        uses: ThexXTURBOXx/mypy-github-action@main
+        uses: sasanquaneuf/mypy-github-action@main
         with:
           checkName: 'mypy'
         env:
