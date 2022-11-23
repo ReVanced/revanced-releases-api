@@ -143,6 +143,8 @@ if __name__ == '__main__':
         "worker_class": "uvicorn.workers.UvicornWorker",
         "logger_class": StubbedGunicornLogger,
         "preload": True,
+        "forwarded_allow_ips": "*",
+        "proxy_allow_ips": "*",
     }
 
     StandaloneApplication(app, options).run()
