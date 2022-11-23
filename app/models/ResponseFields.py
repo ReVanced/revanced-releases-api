@@ -40,7 +40,6 @@ class PatchesResponseFields(BaseModel):
     description: str
     version: str
     excluded: bool
-    deprecated: bool
     dependencies: list[ str ] | None
     options: list[ PatchesOptionsResponseFields ] | None
     compatiblePackages: list[ CompatiblePackagesResponseFields ]
