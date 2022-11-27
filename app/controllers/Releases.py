@@ -42,16 +42,16 @@ class Releases:
                         'content_type': asset['content_type']
                         }
 
-            no_release_assets_data: dict = {'repository': repository,
-                                            'version': release_version,
-                                            'timestamp': release_timestamp,
-                                            'name': f"{repository.split('/')[1]}-{release_version}.tar.gz",
-                                            'browser_download_url': release_tarball,
-                                            'content_type': 'application/gzip'
-                                            }
             if release_assets:
                 assets = [get_asset_data(asset) for asset in release_assets]
             else:
+                no_release_assets_data: dict = {'repository': repository,
+                                    'version': release_version,
+                                    'timestamp': release_timestamp,
+                                    'name': f"{repository.split('/')[1]}-{release_version}.tar.gz",
+                                    'browser_download_url': release_tarball,
+                                    'content_type': 'application/gzip'
+                                    }
                 assets.append(no_release_assets_data)
 
         return assets
