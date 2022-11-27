@@ -1,10 +1,10 @@
-from toolz.dicttoolz import keyfilter
 import asyncio
 import uvloop
 import orjson
 from base64 import b64decode
-from app.utils.HTTPXClient import HTTPXClient
+from toolz.dicttoolz import keyfilter
 
+from app.utils.HTTPXClient import HTTPXClient
 
 class Releases:
 
@@ -33,7 +33,7 @@ class Releases:
             release_tarball: str = response.json()['tarball_url']
             release_timestamp: str = response.json()['published_at']
 
-            async def get_asset_data(asset: dict) -> dict:
+            def get_asset_data(asset: dict) -> dict:
                 return {'repository': repository,
                         'version': release_version,
                         'timestamp': asset['updated_at'],
@@ -50,9 +50,10 @@ class Releases:
                                             'browser_download_url': release_tarball,
                                             'content_type': 'application/gzip'
                                             }
-
-            assets = [map(get_asset_data, release_assets)
-                      if release_assets else no_release_assets_data]
+            if release_assets:
+                assets = [map(get_asset_data, release_assets)]
+            else:
+                assets.append(no_release_assets_data)
 
         return assets
 
