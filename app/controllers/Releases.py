@@ -3,7 +3,6 @@ import uvloop
 import orjson
 from base64 import b64decode
 from toolz.dicttoolz import keyfilter
-
 from app.utils.HTTPXClient import HTTPXClient
 
 class Releases:
@@ -51,7 +50,7 @@ class Releases:
                                             'content_type': 'application/gzip'
                                             }
             if release_assets:
-                assets = [map(get_asset_data, release_assets)]
+                assets = [get_asset_data(asset) for asset in release_assets]
             else:
                 assets.append(no_release_assets_data)
 
