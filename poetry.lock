@@ -416,7 +416,6 @@ python-versions = ">=3.7"
 
 [package.dependencies]
 mypy-extensions = ">=0.4.3"
-tomli = {version = ">=1.1.0", markers = "python_version < \"3.11\""}
 typing-extensions = ">=3.10"
 
 [package.extras]
@@ -693,14 +692,6 @@ optional = false
 python-versions = ">=2.6, !=3.0.*, !=3.1.*, !=3.2.*"
 
 [[package]]
-name = "tomli"
-version = "2.0.1"
-description = "A lil' TOML parser"
-category = "dev"
-optional = false
-python-versions = ">=3.7"
-
-[[package]]
 name = "toolz"
 version = "0.12.0"
 description = "List processing tools and functional utilities"
@@ -710,7 +701,7 @@ python-versions = ">=3.5"
 
 [[package]]
 name = "types-redis"
-version = "4.3.21.4"
+version = "4.3.21.6"
 description = "Typing stubs for redis"
 category = "dev"
 optional = false
@@ -805,7 +796,7 @@ h11 = ">=0.9.0,<1"
 
 [metadata]
 lock-version = "1.1"
-python-versions = "^3.10"
+python-versions = "~3.11"
 content-hash = "424ef1ced5a48b1e652aefa77c0629df286a1f66d6d9286584b46dbac57e80ea"
 
 [metadata.files]
@@ -1342,6 +1333,7 @@ pycryptodomex = [
     {file = "pycryptodomex-3.15.0-cp27-cp27m-manylinux2010_i686.whl", hash = "sha256:fc9bc7a9b79fe5c750fc81a307052f8daabb709bdaabb0fb18fb136b66b653b5"},
     {file = "pycryptodomex-3.15.0-cp27-cp27m-manylinux2010_x86_64.whl", hash = "sha256:f8be976cec59b11f011f790b88aca67b4ea2bd286578d0bd3e31bcd19afcd3e4"},
     {file = "pycryptodomex-3.15.0-cp27-cp27m-manylinux2014_aarch64.whl", hash = "sha256:78d9621cf0ea35abf2d38fa2ca6d0634eab6c991a78373498ab149953787e5e5"},
+    {file = "pycryptodomex-3.15.0-cp27-cp27m-musllinux_1_1_aarch64.whl", hash = "sha256:7db44039cc8b449bd08ab338a074e87093bd170f1a1b76d2fcef8a3e2ee11199"},
     {file = "pycryptodomex-3.15.0-cp27-cp27m-win32.whl", hash = "sha256:b6306403228edde6e289f626a3908a2f7f67c344e712cf7c0a508bab3ad9e381"},
     {file = "pycryptodomex-3.15.0-cp27-cp27m-win_amd64.whl", hash = "sha256:48697790203909fab02a33226fda546604f4e2653f9d47bc5d3eb40879fa7c64"},
     {file = "pycryptodomex-3.15.0-cp27-cp27mu-manylinux1_i686.whl", hash = "sha256:18e2ab4813883ae63396c0ffe50b13554b32bb69ec56f0afaf052e7a7ae0d55b"},
@@ -1349,12 +1341,14 @@ pycryptodomex = [
     {file = "pycryptodomex-3.15.0-cp27-cp27mu-manylinux2010_i686.whl", hash = "sha256:191e73bc84a8064ad1874dba0ebadedd7cce4dedee998549518f2c74a003b2e1"},
     {file = "pycryptodomex-3.15.0-cp27-cp27mu-manylinux2010_x86_64.whl", hash = "sha256:e3164a18348bd53c69b4435ebfb4ac8a4076291ffa2a70b54f0c4b80c7834b1d"},
     {file = "pycryptodomex-3.15.0-cp27-cp27mu-manylinux2014_aarch64.whl", hash = "sha256:5676a132169a1c1a3712edf25250722ebc8c9102aa9abd814df063ca8362454f"},
+    {file = "pycryptodomex-3.15.0-cp27-cp27mu-musllinux_1_1_aarch64.whl", hash = "sha256:781efd04ea6762bb2ef7d4fa632c9c89895433744b6c345bd0c239d5ab058dfc"},
     {file = "pycryptodomex-3.15.0-cp35-abi3-macosx_10_9_x86_64.whl", hash = "sha256:e2b12968522a0358b8917fc7b28865acac002f02f4c4c6020fcb264d76bfd06d"},
     {file = "pycryptodomex-3.15.0-cp35-abi3-manylinux1_i686.whl", hash = "sha256:e47bf8776a7e15576887f04314f5228c6527b99946e6638cf2f16da56d260cab"},
     {file = "pycryptodomex-3.15.0-cp35-abi3-manylinux1_x86_64.whl", hash = "sha256:996e1ba717077ce1e6d4849af7a1426f38b07b3d173b879e27d5e26d2e958beb"},
     {file = "pycryptodomex-3.15.0-cp35-abi3-manylinux2010_i686.whl", hash = "sha256:65204412d0c6a8e3c41e21e93a5e6054a74fea501afa03046a388cf042e3377a"},
     {file = "pycryptodomex-3.15.0-cp35-abi3-manylinux2010_x86_64.whl", hash = "sha256:dd452a5af7014e866206d41751886c9b4bf379a339fdf2dbfc7dd16c0fb4f8e0"},
     {file = "pycryptodomex-3.15.0-cp35-abi3-manylinux2014_aarch64.whl", hash = "sha256:b9279adc16e4b0f590ceff581f53a80179b02cba9056010d733eb4196134a870"},
+    {file = "pycryptodomex-3.15.0-cp35-abi3-musllinux_1_1_aarch64.whl", hash = "sha256:04a5d6a17560e987272fc1763e9772a87689a08427b8cbdebe3ca7cba95d6156"},
     {file = "pycryptodomex-3.15.0-cp35-abi3-win32.whl", hash = "sha256:46b3f05f2f7ac7841053da4e0f69616929ca3c42f238c405f6c3df7759ad2780"},
     {file = "pycryptodomex-3.15.0-cp35-abi3-win_amd64.whl", hash = "sha256:8eecdf9cdc7343001d047f951b9cc805cd68cb6cd77b20ea46af5bffc5bd3dfb"},
     {file = "pycryptodomex-3.15.0-pp27-pypy_73-macosx_10_9_x86_64.whl", hash = "sha256:67e1e6a92151023ccdfcfbc0afb3314ad30080793b4c27956ea06ab1fb9bcd8a"},
@@ -1457,17 +1451,13 @@ toml = [
     {file = "toml-0.10.2-py2.py3-none-any.whl", hash = "sha256:806143ae5bfb6a3c6e736a764057db0e6a0e05e338b5630894a5f779cabb4f9b"},
     {file = "toml-0.10.2.tar.gz", hash = "sha256:b3bda1d108d5dd99f4a20d24d9c348e91c4db7ab1b749200bded2f839ccbe68f"},
 ]
-tomli = [
-    {file = "tomli-2.0.1-py3-none-any.whl", hash = "sha256:939de3e7a6161af0c887ef91b7d41a53e7c5a1ca976325f429cb46ea9bc30ecc"},
-    {file = "tomli-2.0.1.tar.gz", hash = "sha256:de526c12914f0c550d15924c62d72abc48d6fe7364aa87328337a31007fe8a4f"},
-]
 toolz = [
     {file = "toolz-0.12.0-py3-none-any.whl", hash = "sha256:2059bd4148deb1884bb0eb770a3cde70e7f954cfbbdc2285f1f2de01fd21eb6f"},
     {file = "toolz-0.12.0.tar.gz", hash = "sha256:88c570861c440ee3f2f6037c4654613228ff40c93a6c25e0eba70d17282c6194"},
 ]
 types-redis = [
-    {file = "types-redis-4.3.21.4.tar.gz", hash = "sha256:3955c5682f926a1aaee13ed5bc0a37521115b0b8ffd6cd457facf517999abe93"},
-    {file = "types_redis-4.3.21.4-py3-none-any.whl", hash = "sha256:cf8a94ac9efbeb6459fd1aa05dbb977fc59c1022ebe8f72bc0bae57df136105d"},
+    {file = "types-redis-4.3.21.6.tar.gz", hash = "sha256:f7969f73a0f79e9e7895f053a06d8b429fb7b5d4fe1269b8ee40463388f653ad"},
+    {file = "types_redis-4.3.21.6-py3-none-any.whl", hash = "sha256:615e5a9142993789ffc22ee54435769b600da3e528bb51cf38430e5cd82af306"},
 ]
 types-toml = [
     {file = "types-toml-0.10.8.1.tar.gz", hash = "sha256:171bdb3163d79a520560f24ba916a9fc9bff81659c5448a9fea89240923722be"},
