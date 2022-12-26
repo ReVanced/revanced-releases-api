@@ -3,7 +3,7 @@ version: "3.8"
 services:
   redis:
     container_name: revanced-releases-api-redis
-    image: redis-stack-server:latest
+    image: redis/redis-stack-server:latest
     environment:
       - REDIS_ARGS=--save 60 1 --appendonly yes
     volumes:
