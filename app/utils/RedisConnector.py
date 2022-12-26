@@ -1,10 +1,12 @@
 import os
-import toml
+
 from redis import asyncio as aioredis
+
+from app.dependencies import load_config
 
 # Load config
 
-config: dict = toml.load("config.toml")
+config: dict = load_config()
 
 # Redis connection parameters
 
