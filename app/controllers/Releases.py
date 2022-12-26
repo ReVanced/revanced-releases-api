@@ -104,7 +104,7 @@ class Releases:
         # Returns:
         #    list: a list of dictionaries containing the repository's contributors
         
-        keep: set = {'login', 'avatar_url', 'html_url'}
+        keep: set = {'login', 'avatar_url', 'html_url', 'contributions'}
         
         response = await self.httpx_client.get(f"https://api.github.com/repos/{repository}/contributors")
         

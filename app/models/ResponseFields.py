@@ -53,6 +53,7 @@ class ContributorFields(BaseModel):
     login: str
     avatar_url: str
     html_url: str
+    contributions: int
     
 class ContributorsResponseFields(BaseModel):
     """Implements the fields for each repository in the /contributors endpoint
