@@ -3,6 +3,7 @@ import uvloop
 import orjson
 from base64 import b64decode
 from toolz.dicttoolz import keyfilter
+import asyncstdlib.builtins as a
 from app.utils.HTTPXClient import HTTPXClient
 
 class Releases:
@@ -32,7 +33,7 @@ class Releases:
             release_tarball: str = response.json()['tarball_url']
             release_timestamp: str = response.json()['published_at']
 
-            def get_asset_data(asset: dict) -> dict:
+            async def get_asset_data(asset: dict) -> dict:
                 return {'repository': repository,
                         'version': release_version,
                         'timestamp': asset['updated_at'],
@@ -43,7 +44,7 @@ class Releases:
                         }
 
             if release_assets:
-                assets = [get_asset_data(asset) for asset in release_assets]
+                assets = await asyncio.gather(*[get_asset_data(asset) for asset in release_assets])
             else:
                 no_release_assets_data: dict = {'repository': repository,
                                     'version': release_version,
@@ -139,7 +140,7 @@ class Releases:
 
         results: list[dict] = await asyncio.gather(*[self.__get_contributors(repository) for repository in revanced_repositories])
 
-        for key, value in zip(revanced_repositories, results):
+        async for key, value in a.zip(revanced_repositories, results):
             data = {'name': key, 'contributors': value}
             contributors['repositories'].append(data)
 
@@ -172,25 +173,35 @@ class Releases:
                 f"https://api.github.com/repos/{org}/{repository}/releases?per_page=2"
             )
 
-            releases = _releases.json()
+            if _releases.status_code == 200:
+                releases = _releases.json()
+                if any(releases):
+                    since = releases[1]['created_at']
+                    until = releases[0]['created_at']
+                else:
+                    raise ValueError("No releases found")
 
-            since = releases[1]['created_at']
-            until = releases[0]['created_at']
+                _response = await self.httpx_client.get(
+                    f"https://api.github.com/repos/{org}/{repository}/commits?path={path}&since={since}&until={until}"
+                )
+                
+                if _response.status_code == 200:
+                    response = _response.json()
 
-            _response = await self.httpx_client.get(
-                f"https://api.github.com/repos/{org}/{repository}/commits?path={path}&since={since}&until={until}"
-            )
-
-            response = _response.json()
-
-            for commit in response:
-                data: dict[str, str] = {}
-                data["sha"] = commit["sha"]
-                data["author"] = commit["commit"]["author"]["name"]
-                data["message"] = commit["commit"]["message"]
-                data["html_url"] = commit["html_url"]
-                payload['commits'].append(data)
-
-            return payload
+                    async def get_commit_data(commit: dict) -> dict:
+                        return {'sha': commit['sha'],
+                                'author': commit['commit']['author']['name'],
+                                'date': commit['commit']['author']['date'],
+                                'message': commit['commit']['message'],
+                                'url': commit['html_url']
+                                }
+                        
+                    data: list = await asyncio.gather(*[get_commit_data(commit) for commit in response])
+                    
+                    payload['commits'].append(data)
+                else:
+                    raise ValueError("Error retrieving commits")
         else:
-            raise Exception("Invalid organization.")
+            raise ValueError("Invalid organization.")
+    
+        return payload

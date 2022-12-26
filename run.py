@@ -1,13 +1,13 @@
 import os
 import sys
-import toml
+
 import logging
 import sentry_sdk
 from app.main import app
 from loguru import logger
 from fastapi import FastAPI
 from types import FrameType
-from typing import Any, Optional
+from typing import Any
 from multiprocessing import cpu_count
 from gunicorn.glogging import Logger
 from gunicorn.app.base import BaseApplication
@@ -15,7 +15,9 @@ from sentry_sdk.integrations.redis import RedisIntegration
 from sentry_sdk.integrations.httpx import HttpxIntegration
 from sentry_sdk.integrations.gnu_backtrace import GnuBacktraceIntegration
 
-config: dict = toml.load("config.toml")
+from app.dependencies import load_config
+
+config: dict = load_config()
 
 # Enable sentry logging
 
