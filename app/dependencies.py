@@ -1,4 +1,4 @@
-import toml
+import tomllib as toml
 
 def load_config() -> dict:
     """Loads the config.toml file.
@@ -6,4 +6,7 @@ def load_config() -> dict:
     Returns:
         dict: the config.toml file as a dict
     """
-    return toml.load("config.toml")
+    
+    with open('config.toml', 'rb') as config_file:
+        return toml.load(config_file)
+

@@ -1,5 +1,5 @@
 from time import sleep
-import toml
+
 import orjson
 from typing import Optional
 import argon2
@@ -12,7 +12,9 @@ from app.utils.Generators import Generators
 from app.models.ClientModels import ClientModel
 from app.utils.RedisConnector import RedisConnector
 
-config: dict = toml.load("config.toml")
+from app.dependencies import load_config
+
+config: dict = load_config()
 
 class Clients:
     

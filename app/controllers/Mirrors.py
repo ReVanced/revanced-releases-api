@@ -1,10 +1,12 @@
-import toml
+
 from redis import asyncio as aioredis
 import app.utils.Logger as Logger
 from app.models.MirrorModels import MirrorModel, MirrorStoreModel
 from app.utils.RedisConnector import RedisConnector
 
-config: dict = toml.load("config.toml")
+from app.dependencies import load_config
+
+config: dict = load_config()
 
 class Mirrors:
     """Implements the Mirror class for the ReVanced API"""

@@ -107,3 +107,12 @@ class RevokedTokenResponse(BaseModel):
     """
     
     revoked: bool
+
+class SocialsResponseModel(BaseModel):
+    """Implements the JSON response model for the /socials endpoint.
+
+    Args:
+        BaseModel (pydantic.BaseModel): BaseModel from pydantic
+    """
+    
+    __root__: dict[ str, str ]
