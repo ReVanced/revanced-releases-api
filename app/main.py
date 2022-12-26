@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import os
-import toml
+
 import binascii
 from redis import Redis
 
@@ -34,15 +34,18 @@ from app.routers import tools
 from app.routers import clients
 from app.routers import patches
 from app.routers import mirrors
+from app.routers import socials
 from app.routers import changelogs
 from app.routers import contributors
 from app.routers import announcement
+
+from app.dependencies import load_config
 
 """Get latest ReVanced releases from GitHub API."""
 
 # Load config
 
-config: dict = toml.load("config.toml")
+config: dict = load_config()
 
 # Create FastAPI instance
 
@@ -74,6 +77,7 @@ app.include_router(tools.router)
 app.include_router(patches.router)
 app.include_router(contributors.router)
 app.include_router(changelogs.router)
+app.include_router(socials.router)
 app.include_router(auth.router)
 app.include_router(clients.router)
 app.include_router(announcement.router)

@@ -1,4 +1,4 @@
-FROM python:3.10-slim
+FROM python:3.11-slim
 
 ARG GITHUB_TOKEN
 ENV GITHUB_TOKEN $GITHUB_TOKEN
