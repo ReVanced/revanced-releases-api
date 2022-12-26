@@ -55,7 +55,7 @@ database = 5
 access_token_expires = false
 
 [app]
-repositories = ["TeamVanced/VancedMicroG", "revanced/revanced-cli", "revanced/revanced-patcher", "revanced/revanced-patches", "revanced/revanced-integrations", "revanced/revanced-manager", "revanced/revanced-website", "revanced/revanced-releases-api"]
+repositories = ["TeamVanced/VancedMicroG", "revanced/revanced-patcher", "revanced/revanced-patches", "revanced/revanced-integrations", "revanced/revanced-manager", "revanced/revanced-cli", "revanced/revanced-website", "revanced/revanced-releases-api"]
 
 [socials]
 website = "https://revanced.app"
