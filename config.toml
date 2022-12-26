@@ -1,5 +1,4 @@
 [docs]
-
 title = "ReVanced Releases API"
 description = """
 ## The official JSON API for ReVanced Releases 🚀
@@ -22,10 +21,9 @@ description = """
 3. Abuse of the API will result in IP blocks
 
 """
-version = "1.0.0"
+version = "1.1.0"
 
 [license]
-
 name = "AGPL-3.0"
 url = "https://www.gnu.org/licenses/agpl-3.0.en.html"
 
@@ -57,6 +55,13 @@ database = 5
 access_token_expires = false
 
 [app]
-
 repositories = ["TeamVanced/VancedMicroG", "revanced/revanced-cli", "revanced/revanced-patcher", "revanced/revanced-patches", "revanced/revanced-integrations", "revanced/revanced-manager", "revanced/revanced-website", "revanced/revanced-releases-api"]
 
+[socials]
+website = "https://revanced.app"
+github = "https://github.com/revanced"
+twitter = "https://twitter.com/revancedapp"
+discord = "https://revanced.app/discord"
+reddit = "https://www.reddit.com/r/revancedapp"
+telegram = "https://t.me/app_revanced"
+youtube = "https://www.youtube.com/@ReVanced"

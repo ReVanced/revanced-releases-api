@@ -1,4 +1,4 @@
-import toml
+
 from redis import asyncio as aioredis
 
 import app.utils.Logger as Logger
@@ -6,7 +6,9 @@ from app.utils.Generators import Generators
 from app.models.AnnouncementModels import AnnouncementCreateModel
 from app.utils.RedisConnector import RedisConnector
 
-config: dict = toml.load("config.toml")
+from app.dependencies import load_config
+
+config: dict = load_config()
 
 class Announcements:
     """Implements the announcements class for the ReVanced API"""

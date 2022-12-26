@@ -1,4 +1,4 @@
-ARG VARIANT="3.10-bullseye"
+ARG VARIANT="3.11-bullseye"
 FROM mcr.microsoft.com/vscode/devcontainers/python:0-${VARIANT}
 
 ARG NODE_VERSION="none"

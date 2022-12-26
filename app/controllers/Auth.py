@@ -1,11 +1,13 @@
 from datetime import timedelta
 import os
-import toml
+
 from datetime import timedelta
 from pydantic import BaseModel
 from fastapi_paseto_auth import AuthPASETO
 
-config: dict = toml.load("config.toml")
+from app.dependencies import load_config
+
+config: dict = load_config()
 
 class PasetoSettings(BaseModel):
     authpaseto_secret_key: str = os.environ['SECRET_KEY']
