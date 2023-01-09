@@ -29,15 +29,15 @@ import app.models.GeneralErrors as GeneralErrors
 
 from app.routers import root
 from app.routers import ping
-from app.routers import auth
+#from app.routers import auth
 from app.routers import tools
-from app.routers import clients
-from app.routers import patches
-from app.routers import mirrors
+#from app.routers import clients
+#from app.routers import patches
+#from app.routers import mirrors
 from app.routers import socials
 from app.routers import changelogs
 from app.routers import contributors
-from app.routers import announcement
+#from app.routers import announcement
 
 from app.dependencies import load_config
 
@@ -74,14 +74,14 @@ app.add_middleware(SlowAPIMiddleware)
 
 app.include_router(root.router)
 app.include_router(tools.router)
-app.include_router(patches.router)
+#app.include_router(patches.router)
 app.include_router(contributors.router)
 app.include_router(changelogs.router)
 app.include_router(socials.router)
-app.include_router(auth.router)
-app.include_router(clients.router)
-app.include_router(announcement.router)
-app.include_router(mirrors.router)
+#app.include_router(auth.router)
+#app.include_router(clients.router)
+#app.include_router(announcement.router)
+#app.include_router(mirrors.router)
 app.include_router(ping.router)
 
 # Setup cache

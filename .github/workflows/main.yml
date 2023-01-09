@@ -52,7 +52,7 @@ jobs:
             latest=${{ startsWith(github.ref, 'refs/heads/main') }}
             suffix=-${{ github.sha }}
 
-      - name: Build and push Docker image
+      - name: Build and push main Docker image
         id: build
         uses: docker/build-push-action@v3
         with:
@@ -60,6 +60,40 @@ jobs:
           context: .
           file: ./Dockerfile
           platforms: linux/amd64,linux/arm64/v8
+          cache-to: type=gha,mode=max,ignore-error=true
+          cache-from: type=gha
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+  
+  build_spheron:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Dockerfile
+        id: checkout
+        uses: actions/checkout@v3
+      
+      - name: Setup Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to DockerHub
+        id: dockerhub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push Spheron Docker image
+        id: build_spheron
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          file: ./Spheron.Dockerfile
+          platforms: linux/amd64
+          cache-to: type=gha,mode=max,ignore-error=true
+          cache-from: type=gha
+          push: true
+          tags: revanced/revanced-releases-api:latest
