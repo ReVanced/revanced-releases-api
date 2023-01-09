@@ -20,8 +20,12 @@ description = """
 2. Client side caching is advised to avoid unnecessary requests
 3. Abuse of the API will result in IP blocks
 
+### Supporters
+
+- Hosted by [Spheron](https://spheron.network?utm_source=revanced&utm_medium=oss) on the [Akash Network](https://akash.network/)
+
 """
-version = "1.1.0"
+version = "1.2.0"
 
 [license]
 name = "AGPL-3.0"
