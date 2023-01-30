@@ -11,6 +11,7 @@ from fastapi.responses import JSONResponse, UJSONResponse
 from slowapi.util import get_remote_address
 from slowapi.middleware import SlowAPIMiddleware
 from slowapi import Limiter, _rate_limit_exceeded_handler
+from fastapi.middleware.cors import CORSMiddleware
 
 from fastapi_cache import FastAPICache
 from fastapi_cache.decorator import cache
@@ -48,6 +49,13 @@ from app.dependencies import load_config
 
 config: dict = load_config()
 
+# Setup CORS config
+
+allow_origins: list[str] = ['*']
+allow_methods: list[str] = ['*']
+allow_headers: list[str] = ['*']
+allow_credentials: bool = True
+
 # Create FastAPI instance
 
 app = FastAPI(title=config['docs']['title'],
@@ -58,6 +66,16 @@ app = FastAPI(title=config['docs']['title'],
                             },
               default_response_class=UJSONResponse
               )
+
+# Hook up CORS middleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allow_origins,
+    allow_methods=allow_methods,
+    allow_headers=allow_headers,
+    allow_credentials=allow_credentials,
+)
 
 # Hook up rate limiter
 limiter = Limiter(key_func=get_remote_address,
@@ -167,8 +185,8 @@ async def invalid_token_exception_handler(request, exc) -> JSONResponse:
 async def startup() -> None:
     """Startup event handler"""
     
-    clients = Clients()
-    await clients.setup_admin()
+    # clients = Clients()
+    # await clients.setup_admin()
     FastAPICache.init(RedisBackend(RedisConnector.connect(config['cache']['database'])),
                       prefix="fastapi-cache")
     
