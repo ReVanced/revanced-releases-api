@@ -29,9 +29,9 @@ class Releases:
         response = await self.httpx_client.get(f"https://api.github.com/repos/{repository}/releases")
         match tag:
             case "prerelease":
-                for index in response.json():
-                    if index['prerelease']:
-                        tag_name = index['tag_name']
+                for release in response.json():
+                    if release['prerelease']:
+                        tag_name = release['tag_name']
                         response = await self.httpx_client.get(f"https://api.github.com/repos/{repository}/releases/tags/{tag_name}")
                     break
 
