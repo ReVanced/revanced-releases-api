@@ -28,9 +28,11 @@ class Releases:
         assets: list = []
         response = await self.httpx_client.get(f"https://api.github.com/repos/{repository}/releases")
         if tag=="prerelease":
-            if response.json()['prerelease']:
-                tag_name = response.json()['tag_name']
-            response = await self.httpx_client.get(f"https://api.github.com/repos/{repository}/releases/tags/{tag_name}")
+            for index in response.json():
+                if index['prerelease']:
+                    tag_name = index['tag_name']
+                    response = await self.httpx_client.get(f"https://api.github.com/repos/{repository}/releases/tags/{tag_name}")
+                break
         else:
             response = await self.httpx_client.get(f"https://api.github.com/repos/{repository}/releases/{tag}")
 
