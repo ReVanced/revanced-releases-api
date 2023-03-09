@@ -14,18 +14,25 @@ class Releases:
 
     httpx_client = HTTPXClient.create()
 
-    async def __get_release(self, repository: str) -> list:
+    async def __get_release(self, repository: str, tag="latest") -> list:
         """Get assets from latest release in a given repository.
 
         Args:
            repository (str): Github's standard username/repository notation
+           tag (str): supply a valid tag or put prerelease to get latest prerelease
 
         Returns:
            dict: dictionary of filename and download url
         """
 
         assets: list = []
-        response = await self.httpx_client.get(f"https://api.github.com/repos/{repository}/releases/latest")
+        response = await self.httpx_client.get(f"https://api.github.com/repos/{repository}/releases")
+        if tag=="prerelease":
+            if response.json()['prerelease']:
+                tag_name = response.json()['tag_name']
+            response = await self.httpx_client.get(f"https://api.github.com/repos/{repository}/releases/tags/{tag_name}")
+        else:
+            response = await self.httpx_client.get(f"https://api.github.com/repos/{repository}/releases/{tag}")
 
         if response.status_code == 200:
             release_assets: dict = response.json()['assets']
@@ -57,7 +64,7 @@ class Releases:
 
         return assets
 
-    async def get_latest_releases(self, repositories: list) -> dict:
+    async def get_latest_releases(self, repositories: list, tag="latest") -> dict:
         """Runs get_release() asynchronously for each repository.
 
         Args:
@@ -70,7 +77,7 @@ class Releases:
         releases: dict[str, list] = {}
         releases['tools'] = []
 
-        results: list = await asyncio.gather(*[self.__get_release(repository) for repository in repositories])
+        results: list = await asyncio.gather(*[self.__get_release(repository, tag) for repository in repositories])
 
         releases['tools'] = [asset for result in results for asset in result]
 
