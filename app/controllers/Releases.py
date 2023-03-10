@@ -29,23 +29,24 @@ class Releases:
         """
 
         assets: list = []
-        response = await self.httpx_client.get(f"https://api.github.com/repos/{repository}/releases")
+        url = f"https://api.github.com/repos/{repository}/releases"
+        response = await self.httpx_client.get(url).json()
 
         match tag:
             case "recent":
-                response = await self.httpx_client.get(f"https://api.github.com/repos/{repository}/releases/tags/{response[0]['tag_name']}")
+                response = await self.httpx_client.get(f"{url}/tags/{response[0]['tag_name']}")
 
             case "prerelease":
-                for release in response.json():
+                for release in response:
                     if release['prerelease']:
-                        response = await self.httpx_client.get(f"https://api.github.com/repos/{repository}/releases/tags/{release['tag_name']}")
+                        response = await self.httpx_client.get(f"{url}/tags/{release['tag_name']}")
                         break
 
             case "latest":
-                response = await self.httpx_client.get(f"https://api.github.com/repos/{repository}/releases/latest")
+                response = await self.httpx_client.get(f"{url}/latest")
 
             case _:
-                response = await self.httpx_client.get(f"https://api.github.com/repos/{repository}/releases/tags/{tag}")
+                response = await self.httpx_client.get(f"{url}/tags/{tag}")
 
         if response.status_code == 200:
             release_assets: dict = response.json()['assets']
