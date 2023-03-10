@@ -19,7 +19,10 @@ class Releases:
 
         Args:
            repository (str): Github's standard username/repository notation
-           tag (str): supply a valid tag or put prerelease to get latest prerelease
+           tag (str): lateset(default) - to get latest release
+                      prerelease - to get lateset prerelease
+                      recent - to get recent release either prerelease or stable whichever is recent
+                      version - supply a valid version tag
 
         Returns:
            dict: dictionary of filename and download url
@@ -27,13 +30,17 @@ class Releases:
 
         assets: list = []
         response = await self.httpx_client.get(f"https://api.github.com/repos/{repository}/releases")
+
         match tag:
-            case "prerelease":
+            case "prerelease" | "recent":
                 for release in response.json():
+                    if tag=="recent":
+                        tag_name = release['tag_name']
+                        break
                     if release['prerelease']:
                         tag_name = release['tag_name']
-                        response = await self.httpx_client.get(f"https://api.github.com/repos/{repository}/releases/tags/{tag_name}")
-                    break
+                        break
+                response = await self.httpx_client.get(f"https://api.github.com/repos/{repository}/releases/tags/{tag_name}")
 
             case "latest":
                 response = await self.httpx_client.get(f"https://api.github.com/repos/{repository}/releases/latest")
