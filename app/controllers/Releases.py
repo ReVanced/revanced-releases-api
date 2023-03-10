@@ -32,15 +32,14 @@ class Releases:
         response = await self.httpx_client.get(f"https://api.github.com/repos/{repository}/releases")
 
         match tag:
-            case "prerelease" | "recent":
+            case "recent":
+                response = await self.httpx_client.get(f"https://api.github.com/repos/{repository}/releases/tags/{response[0]['tag_name']}")
+
+            case "prerelease":
                 for release in response.json():
-                    if tag=="recent":
-                        tag_name = release['tag_name']
-                        break
                     if release['prerelease']:
-                        tag_name = release['tag_name']
+                        response = await self.httpx_client.get(f"https://api.github.com/repos/{repository}/releases/tags/{release['tag_name']}")
                         break
-                response = await self.httpx_client.get(f"https://api.github.com/repos/{repository}/releases/tags/{tag_name}")
 
             case "latest":
                 response = await self.httpx_client.get(f"https://api.github.com/repos/{repository}/releases/latest")
