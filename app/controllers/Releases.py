@@ -14,7 +14,7 @@ class Releases:
 
     httpx_client = HTTPXClient.create()
 
-    async def __get_release(self, repository: str, tag="latest") -> list:
+    async def __get_release(self, repository: str, tag: str = "latest") -> list:
         """Get assets from latest release in a given repository.
 
         Args:
@@ -78,7 +78,7 @@ class Releases:
 
         return assets
 
-    async def get_latest_releases(self, repositories: list, tag="latest") -> dict:
+    async def get_latest_releases(self, repositories: list, tag: str = "latest") -> dict:
         """Runs get_release() asynchronously for each repository.
 
         Args:
