@@ -106,7 +106,7 @@ class Releases:
         releases: dict[str, list] = {}
         releases['tools'] = []
 
-        results: list = await asyncio.gather(*[self.__get_release(repository, tag) for repository in repositories])
+        results: list = await asyncio.gather(*[self.__get_release(repository, tag) for _, repository in repositories.items()])
 
         releases['tools'] = [asset for result in results for asset in result]
 

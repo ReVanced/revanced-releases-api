@@ -18,4 +18,5 @@ async def tools(request: Request, response: Response) -> dict:
     Returns:
         json: information about the patching tools' latest version
     """
-    return await releases.get_latest_releases(config['app']['repositories'])
+    return await releases.get_latest_releases(config['repositories'],
+                                              config['release']['tag'])

@@ -19,4 +19,5 @@ async def patches(request: Request, response: Response) -> dict:
         json: list of latest patches
     """
     
-    return await releases.get_patches_json()
+    return await releases.get_patches_json(config['repositories']['patches'],
+                                           config['release']['tag'])
