@@ -63,7 +63,7 @@ cli = "revanced/revanced-cli"
 website = "revanced/revanced-website"
 release-api = "revanced/revanced-releases-api"
 
-[Release]
+[release]
 tag = "latest"
 
 [socials]
