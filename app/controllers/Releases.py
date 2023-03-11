@@ -12,14 +12,15 @@ class Releases:
 
     httpx_client = HTTPXClient.create()
 
-    async def get_tag_name(self, tag: str) -> str:
+    async def get_tag_name(self, repository: str, tag: str) -> str:
         """get tag name from github release api.
             
             arg:
-               tag (str): lateset(default) - to get latest release
-                          prerelease - to get lateset prerelease
-                          recent - to get recent release either prerelease or stable whichever is recent
-                          version - supply a valid version tag
+                repository (str): Github's standard username/repository notation
+                tag (str): lateset(default) - to get latest release
+                            prerelease - to get lateset prerelease
+                            recent - to get recent release either prerelease or stable whichever is recent
+                            tag_name - supply a valid version tag
 
             returns:
                 str: tag_name string.
@@ -27,7 +28,7 @@ class Releases:
 
         tag_name = None
         if tag in ("recent", "latest", "prerelease"):
-            response = await self.httpx_client.get("https://api.github.com/repos/revanced/revanced-patches/releases").json()
+            response = await self.httpx_client.get(f"https://api.github.com/repos/{repository}/releases").json()
             if tag == "recent":
                 tag_name = response[0]['tag_name']
 
@@ -48,16 +49,16 @@ class Releases:
         """Get assets from latest release in a given repository.
 
         Args:
-           repository (str): Github's standard username/repository notation
-           tag (str): lateset(default), prerelease, recent, tag_name
-                    see get_tag_name() for more details.
+            repository (str): Github's standard username/repository notation
+            tag (str): lateset(default), prerelease, recent, tag_name
+                        see get_tag_name() for more details.
 
         Returns:
            dict: dictionary of filename and download url
         """
 
         assets: list = []
-        tag_name = await self.get_tag_name(tag)
+        tag_name = await self.get_tag_name(repository, tag)
         response = await self.httpx_client.get(f"https://api.github.com/repos/{repository}/releases/tags/{tag_name}")
 
         if response.status_code == 200:
@@ -95,8 +96,8 @@ class Releases:
 
         Args:
             repositories (list): List of repositories in Github's standard username/repository notation
-           tag (str): lateset(default), prerelease, recent, tag_name
-                    see get_tag_name() for more details.
+            tag (str): lateset(default), prerelease, recent, tag_name
+                        see get_tag_name() for more details.
 
         Returns:
             dict: A dictionary containing assets from each repository
@@ -111,34 +112,36 @@ class Releases:
 
         return releases
 
-    async def __get_patches_json(self, tag: str = "latest") -> dict:
+    async def __get_patches_json(self, repository: str, tag: str = "latest") -> dict:
         """Get revanced-patches repository's README.md.
            
            args:
-                tag (str): lateset(default), prerelease, recent, tag_name
+               repository (str): Github's standard username/repository notation
+               tag (str): lateset(default), prerelease, recent, tag_name
                             see get_tag_name() for more details.
 
         Returns:
            dict: JSON content
         """
 
-        tag_name = await self.get_tag_name(tag)
-        content = await self.httpx_client.get(f"https://github.com/revanced/revanced-patches/releases/download/{tag_name}/patches.json").json()
+        tag_name = await self.get_tag_name(repository, tag)
+        content = await self.httpx_client.get(f"https://github.com/{repository}/releases/download/{tag_name}/patches.json").json()
 
         return content
 
-    async def get_patches_json(self, tag: str = "latest") -> dict:
+    async def get_patches_json(self, repository: str, tag: str = "latest") -> dict:
         """Get patches.json from revanced-patches repository.
            
            args:
-                tag (str): lateset(default), prerelease, recent, tag_name
+               repository (str): Github's standard username/repository notation
+               tag (str): lateset(default), prerelease, recent, tag_name
                             see get_tag_name() for more details.
 
         Returns:
             dict: Patches available for a given app
         """
 
-        patches: dict = await self.__get_patches_json(tag)
+        patches: dict = await self.__get_patches_json(repository, tag)
 
         return patches
 
