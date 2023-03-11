@@ -91,13 +91,12 @@ class Releases:
 
         return assets
 
-    async def get_latest_releases(self, repositories: list, tag: str = "latest") -> dict:
+    async def get_latest_releases(self, repositories: dict) -> dict:
         """Runs get_release() asynchronously for each repository.
 
         Args:
-            repositories (list): List of repositories in Github's standard username/repository notation
-            tag (str): lateset(default), prerelease, recent, tag_name
-                        see get_tag_name() for more details.
+            repositories (dict): dict of repositories and tags in Github's standard username/repository notation
+            example (dict): {repo : tag, ...}
 
         Returns:
             dict: A dictionary containing assets from each repository
@@ -106,7 +105,7 @@ class Releases:
         releases: dict[str, list] = {}
         releases['tools'] = []
 
-        results: list = await asyncio.gather(*[self.__get_release(repository, tag) for _, repository in repositories.items()])
+        results: list = await asyncio.gather(*[self.__get_release(repository, tag) for repository, tag in repositories.items()])
 
         releases['tools'] = [asset for result in results for asset in result]
 
