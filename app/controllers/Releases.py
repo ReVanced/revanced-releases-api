@@ -14,39 +14,53 @@ class Releases:
 
     httpx_client = HTTPXClient.create()
 
+    async def get_tag_name(self, tag: str) -> str:
+        """get tag name from github release api.
+            
+            arg:
+               tag (str): lateset(default) - to get latest release
+                          prerelease - to get lateset prerelease
+                          recent - to get recent release either prerelease or stable whichever is recent
+                          version - supply a valid version tag
+
+            returns:
+                str: tag_name string.
+        """
+
+        tag_name = None
+        if tag in ("recent", "latest", "prerelease"):
+            response = await self.httpx_client.get("https://api.github.com/repos/revanced/revanced-patches/releases").json()
+            if tag == "recent":
+                tag_name = response[0]['tag_name']
+
+            if tag in ("prerelease", "latest"):
+                for release in response:
+                    if tag == "prerelease" and release['prerelease']:
+                        tag_name = release['tag_name']
+                        break
+                    elif not release['prerelease']:
+                        tag_name = release['tag_name']
+                        break
+        else:
+            tag_name = tag
+
+        return tag_name
+
     async def __get_release(self, repository: str, tag: str = "latest") -> list:
         """Get assets from latest release in a given repository.
 
         Args:
            repository (str): Github's standard username/repository notation
-           tag (str): lateset(default) - to get latest release
-                      prerelease - to get lateset prerelease
-                      recent - to get recent release either prerelease or stable whichever is recent
-                      version - supply a valid version tag
+           tag (str): lateset(default), prerelease, recent, tag_name
+                    see get_tag_name() for more details.
 
         Returns:
            dict: dictionary of filename and download url
         """
 
         assets: list = []
-        url = f"https://api.github.com/repos/{repository}/releases"
-        response = await self.httpx_client.get(url).json()
-
-        match tag:
-            case "recent":
-                response = await self.httpx_client.get(f"{url}/tags/{response[0]['tag_name']}")
-
-            case "prerelease":
-                for release in response:
-                    if release['prerelease']:
-                        response = await self.httpx_client.get(f"{url}/tags/{release['tag_name']}")
-                        break
-
-            case "latest":
-                response = await self.httpx_client.get(f"{url}/latest")
-
-            case _:
-                response = await self.httpx_client.get(f"{url}/tags/{tag}")
+        tag_name = await self.get_tag_name(tag)
+        response = await self.httpx_client.get(f"https://api.github.com/repos/{repository}/releases/tags/{tag_name}")
 
         if response.status_code == 200:
             release_assets: dict = response.json()['assets']
@@ -83,6 +97,8 @@ class Releases:
 
         Args:
             repositories (list): List of repositories in Github's standard username/repository notation
+           tag (str): lateset(default), prerelease, recent, tag_name
+                    see get_tag_name() for more details.
 
         Returns:
             dict: A dictionary containing assets from each repository
@@ -97,27 +113,34 @@ class Releases:
 
         return releases
 
-    async def __get_patches_json(self) -> dict:
+    async def __get_patches_json(self, tag: str = "latest") -> dict:
         """Get revanced-patches repository's README.md.
+           
+           args:
+                tag (str): lateset(default), prerelease, recent, tag_name
+                            see get_tag_name() for more details.
 
         Returns:
            dict: JSON content
         """
 
-        response = await self.httpx_client.get(f"https://api.github.com/repos/revanced/revanced-patches/contents/patches.json")
-        content = orjson.loads(
-            b64decode(response.json()['content']).decode('utf-8'))
+        tag_name = await self.get_tag_name(tag)
+        content = await self.httpx_client.get(f"https://github.com/revanced/revanced-patches/releases/download/{tag_name}/patches.json").json()
 
         return content
 
-    async def get_patches_json(self) -> dict:
+    async def get_patches_json(self, tag: str = "latest") -> dict:
         """Get patches.json from revanced-patches repository.
+           
+           args:
+                tag (str): lateset(default), prerelease, recent, tag_name
+                            see get_tag_name() for more details.
 
         Returns:
             dict: Patches available for a given app
         """
 
-        patches: dict = await self.__get_patches_json()
+        patches: dict = await self.__get_patches_json(tag)
 
         return patches
 
