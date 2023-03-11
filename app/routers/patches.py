@@ -10,14 +10,14 @@ releases = Releases()
 
 config: dict = load_config()
 
-@router.get('/patches', response_model=ResponseModels.PatchesResponseModel, tags=['ReVanced Tools'])
+@router.get('/patches/{tag}', response_model=ResponseModels.PatchesResponseModel, tags=['ReVanced Tools'])
 @cache(config['cache']['expire'])
-async def patches(request: Request, response: Response) -> dict:
+async def patches(request: Request, response: Response,
+                  tag: str = config['repositories']['patches'][1]) -> dict:
     """Get latest patches.
 
     Returns:
         json: list of latest patches
     """
     
-    return await releases.get_patches_json(config['repositories']['patches'][0],
-                                           config['repositories']['patches'][1])
+    return await releases.get_patches_json(config['repositories']['patches'][0], tag)

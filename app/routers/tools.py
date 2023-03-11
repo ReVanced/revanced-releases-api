@@ -9,14 +9,15 @@ router = APIRouter()
 releases = Releases()
 
 config: dict = load_config()
+repos= dict(config['repositories'].values())
 
-@router.get('/tools', response_model=ResponseModels.ToolsResponseModel, tags=['ReVanced Tools'])
+@router.get('/tools/{repositories}', response_model=ResponseModels.ToolsResponseModel, tags=['ReVanced Tools'])
 @cache(config['cache']['expire'])
-async def tools(request: Request, response: Response) -> dict:
+async def tools(request: Request, response: Response,
+                repositories: dict = repos) -> dict:
     """Get patching tools' latest version.
 
     Returns:
         json: information about the patching tools' latest version
     """
-    repositories = dict(config['repositories'].values())
     return await releases.get_latest_releases(repositories)
