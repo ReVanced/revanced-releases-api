@@ -3,6 +3,7 @@ import uvloop
 from toolz.dicttoolz import keyfilter
 import asyncstdlib.builtins as a
 from app.utils.HTTPXClient import HTTPXClient
+from re import findall
 
 class Releases:
 
@@ -59,7 +60,7 @@ class Releases:
         Args:
             repository (str): Github's standard username/repository notation
             tag (str): lateset(default)/ prerelease/ recent/ tag_name
-                        see get_tag_name() for more details.
+                        see get_tag_release() for more details.
 
         Returns:
            dict: dictionary of filename and download url
@@ -123,7 +124,7 @@ class Releases:
            args:
                repository (str): Github's standard username/repository notation
                tag (str): lateset(default)/ prerelease/ recent/ tag_name
-                          see get_tag_name() for more details.
+                          see get_tag_release() for more details.
 
         Returns:
            dict: JSON content
@@ -140,7 +141,7 @@ class Releases:
            args:
                repository (str): Github's standard username/repository notation
                tag (str): lateset(default), prerelease, recent, tag_name
-                            see get_tag_name() for more details.
+                            see get_tag_release() for more details.
 
         Returns:
             dict: Patches available for a given app
@@ -196,62 +197,38 @@ class Releases:
 
         return contributors
 
-    async def get_commits(self, org: str, repository: str, path: str) -> dict:
+    async def get_commits(self, repository: str, current_version: str, target_tag: str = "latest") -> str:
         """Get commit history from a given repository.
 
         Args:
-            org (str): Username of the organization | valid values: revanced or vancedapp
             repository (str): Repository name
-            path (str): Path to the file
-            per_page (int): Number of commits to return
-            since (str): ISO 8601 timestamp
-
-        Raises:
-            Exception: Raise a generic exception if the organization is not revanced or vancedapp
+            current_version (str): current version(vx.x.x) installed
+            target_tag (str): lateset(default), prerelease, recent, tag_name
 
         Returns:
-            dict: a dictionary containing the repository's latest commits
+            str: string containing the repository's commits between version
         """
+        commits = ""
+        releases = await self.httpx_client.get(f"https://api.github.com/repos/{repository}/releases").json()
+        target_version = await self.get_tag_release(repository, target_tag)['tag_name']
+        target_version = "".join(findall("\d+", target_version))
+        current_version = "".join(findall("\d+", current_version))
 
-        payload: dict = {}
-        payload["repository"] = f"{org}/{repository}"
-        payload["path"] = path
-        payload["commits"] = []
+        while len(target_version) != len(current_version):
+            if len(target_version) > len(current_version):
+                current_version += "0"
+            else:
+                target_version += "0"
 
-        if org == 'revanced' or org == 'vancedapp':
-            _releases = await self.httpx_client.get(
-                f"https://api.github.com/repos/{org}/{repository}/releases?per_page=2"
-            )
+        target_version = int(target_version)
+        current_version = int(current_version)
 
-            if _releases.status_code == 200:
-                releases = _releases.json()
-                if any(releases):
-                    since = releases[1]['created_at']
-                    until = releases[0]['created_at']
-                else:
-                    raise ValueError("No releases found")
-
-                _response = await self.httpx_client.get(
-                    f"https://api.github.com/repos/{org}/{repository}/commits?path={path}&since={since}&until={until}"
-                )
-                
-                if _response.status_code == 200:
-                    response = _response.json()
-
-                    async def get_commit_data(commit: dict) -> dict:
-                        return {'sha': commit['sha'],
-                                'author': commit['commit']['author']['name'],
-                                'date': commit['commit']['author']['date'],
-                                'message': commit['commit']['message'],
-                                'url': commit['html_url']
-                                }
-                        
-                    data: list = await asyncio.gather(*[get_commit_data(commit) for commit in response])
-                    
-                    payload['commits'].append(data)
-                else:
-                    raise ValueError("Error retrieving commits")
-        else:
-            raise ValueError("Invalid organization.")
-    
-        return payload
+        for release in releases:
+            if target_version > current_version and release['tag_name'] > current_version:
+                commits += release['body']
+            elif target_version < current_version and release['tag_name'] == target_version:
+                commits += release['body']
+            else:
+                break
+        # commits need cleanup
+        return commits
