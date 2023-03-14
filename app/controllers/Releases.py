@@ -130,9 +130,9 @@ class Releases:
         """
 
         release_dict = await self.get_tag_release(repository, tag)
-        tag_name = release_dict['tag_name']
-
-        return await self.httpx_client.get(f"https://github.com/{repository}/releases/download/{tag_name}/patches.json").json()
+        for asset in release_dict['assets']:
+            if asset['name'] == "patches.json":
+                return await self.httpx_client.get(asset['browser_download_url']).json()
 
     async def get_patches_json(self, repository: str, tag: str = "latest") -> dict:
         """Get patches.json from revanced-patches repository.
