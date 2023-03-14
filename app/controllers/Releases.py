@@ -17,13 +17,13 @@ class Releases:
             
             arg:
                 repository (str): Github's standard username/repository notation
-                tag (str): lateset(default) - to get latest release
-                            prerelease - to get lateset prerelease
-                            recent - to get recent release either prerelease or stable whichever is recent
-                            tag_name - supply a valid version tag
+                tag (str): lateset- to get latest release
+                           prerelease - to get lateset prerelease
+                           recent - to get recent release either prerelease or stable whichever is recent
+                           tag_name - supply a valid version tag
 
             returns:
-                str: tag_name string.
+                str: tag_name(vx.x.x) of supplied tag arg.
         """
 
         tag_name = None
@@ -50,7 +50,7 @@ class Releases:
 
         Args:
             repository (str): Github's standard username/repository notation
-            tag (str): lateset(default), prerelease, recent, tag_name
+            tag (str): lateset(default)/ prerelease/ recent/ tag_name
                         see get_tag_name() for more details.
 
         Returns:
@@ -116,8 +116,8 @@ class Releases:
            
            args:
                repository (str): Github's standard username/repository notation
-               tag (str): lateset(default), prerelease, recent, tag_name
-                            see get_tag_name() for more details.
+               tag (str): lateset(default)/ prerelease/ recent/ tag_name
+                          see get_tag_name() for more details.
 
         Returns:
            dict: JSON content
