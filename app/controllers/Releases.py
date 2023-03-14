@@ -12,7 +12,7 @@ class Releases:
 
     httpx_client = HTTPXClient.create()
 
-    async def get_tag_name(self, repository: str, tag: str) -> str:
+    async def get_tag_release(self, repository: str, tag: str) -> dict:
         """get tag name from github release api.
             
             arg:
@@ -23,27 +23,35 @@ class Releases:
                            tag_name - supply a valid version tag
 
             returns:
-                str: tag_name(vx.x.x) of supplied tag arg.
+                dict: Release dict of supplied tag arg.
         """
 
-        tag_name = None
-        if tag in ("recent", "latest", "prerelease"):
-            response = await self.httpx_client.get(f"https://api.github.com/repos/{repository}/releases").json()
-            if tag == "recent":
-                tag_name = response[0]['tag_name']
+        response = await self.httpx_client.get(f"https://api.github.com/repos/{repository}/releases")
+        release_dict = None
 
-            if tag in ("prerelease", "latest"):
-                for release in response:
-                    if tag == "prerelease" and release['prerelease']:
-                        tag_name = release['tag_name']
+        if response.status_code == 200:
+            for release in response.json():
+                match tag:
+                    case "recent":
+                        release_dict = release
                         break
-                    elif not release['prerelease']:
-                        tag_name = release['tag_name']
-                        break
-        else:
-            tag_name = tag
 
-        return tag_name
+                    case "prerelease":
+                        if release['prerelease']:
+                            release_dict = release
+                            break
+
+                    case "latest":
+                        if not release['prerelease']:
+                            release_dict = release
+                            break
+
+                    case _:
+                        if tag == release['tag_name']:
+                            release_dict = release
+                            break
+
+        return release_dict
 
     async def __get_release(self, repository: str, tag: str = "latest") -> list:
         """Get assets from latest release in a given repository.
@@ -58,36 +66,34 @@ class Releases:
         """
 
         assets: list = []
-        tag_name = await self.get_tag_name(repository, tag)
-        response = await self.httpx_client.get(f"https://api.github.com/repos/{repository}/releases/tags/{tag_name}")
+        release_dict = await self.get_tag_release(repository, tag)
 
-        if response.status_code == 200:
-            release_assets: dict = response.json()['assets']
-            release_version: str = response.json()['tag_name']
-            release_tarball: str = response.json()['tarball_url']
-            release_timestamp: str = response.json()['published_at']
+        release_assets: dict = release_dict['assets']
+        release_version: str = release_dict['tag_name']
+        release_tarball: str = release_dict['tarball_url']
+        release_timestamp: str = release_dict['published_at']
 
-            async def get_asset_data(asset: dict) -> dict:
-                return {'repository': repository,
-                        'version': release_version,
-                        'timestamp': asset['updated_at'],
-                        'name': asset['name'],
-                        'size': asset['size'],
-                        'browser_download_url': asset['browser_download_url'],
-                        'content_type': asset['content_type']
-                        }
+        async def get_asset_data(asset: dict) -> dict:
+            return {'repository': repository,
+                    'version': release_version,
+                    'timestamp': asset['updated_at'],
+                    'name': asset['name'],
+                    'size': asset['size'],
+                    'browser_download_url': asset['browser_download_url'],
+                    'content_type': asset['content_type']
+                    }
 
-            if release_assets:
-                assets = await asyncio.gather(*[get_asset_data(asset) for asset in release_assets])
-            else:
-                no_release_assets_data: dict = {'repository': repository,
-                                    'version': release_version,
-                                    'timestamp': release_timestamp,
-                                    'name': f"{repository.split('/')[1]}-{release_version}.tar.gz",
-                                    'browser_download_url': release_tarball,
-                                    'content_type': 'application/gzip'
-                                    }
-                assets.append(no_release_assets_data)
+        if release_assets:
+            assets = await asyncio.gather(*[get_asset_data(asset) for asset in release_assets])
+        else:
+            no_release_assets_data: dict = {'repository': repository,
+                                'version': release_version,
+                                'timestamp': release_timestamp,
+                                'name': f"{repository.split('/')[1]}-{release_version}.tar.gz",
+                                'browser_download_url': release_tarball,
+                                'content_type': 'application/gzip'
+                                }
+            assets.append(no_release_assets_data)
 
         return assets
 
@@ -123,10 +129,10 @@ class Releases:
            dict: JSON content
         """
 
-        tag_name = await self.get_tag_name(repository, tag)
-        content = await self.httpx_client.get(f"https://github.com/{repository}/releases/download/{tag_name}/patches.json").json()
+        release_dict = await self.get_tag_release(repository, tag)
+        tag_name = release_dict['tag_name']
 
-        return content
+        return await self.httpx_client.get(f"https://github.com/{repository}/releases/download/{tag_name}/patches.json").json()
 
     async def get_patches_json(self, repository: str, tag: str = "latest") -> dict:
         """Get patches.json from revanced-patches repository.
