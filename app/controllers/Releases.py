@@ -226,7 +226,8 @@ class Releases:
         current_version = int(current_version)
 
         def cleanup(text: str) ->str:
-            return sub(r"\(.*\(https.*\)", "", text)
+            #need more cleanups
+            return sub(r"\(https.+\)|\(", "", text) +"\n"
 
         for release in releases:
             if target_version > current_version and release['tag_name'] > current_version:
