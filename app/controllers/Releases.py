@@ -3,7 +3,7 @@ import uvloop
 from toolz.dicttoolz import keyfilter
 import asyncstdlib.builtins as a
 from app.utils.HTTPXClient import HTTPXClient
-from re import findall
+from re import findall, sub
 
 class Releases:
 
@@ -213,8 +213,8 @@ class Releases:
         target_release = await self.get_tag_release(repository, target_tag)
         target_version = target_release['tag_name']
 
-        target_version = "".join(findall("\d+", target_version))
-        current_version = "".join(findall("\d+", current_version))
+        target_version = "".join(findall(r"\d+", target_version))
+        current_version = "".join(findall(r"\d+", current_version))
 
         while len(target_version) != len(current_version):
             if len(target_version) > len(current_version):
@@ -225,18 +225,19 @@ class Releases:
         target_version = int(target_version)
         current_version = int(current_version)
 
+        def cleanup(text: str) ->str:
+            return sub(r"\(.*\(https.*\)", "", text)
+
         for release in releases:
             if target_version > current_version and release['tag_name'] > current_version:
                 if release['prerelease'] and target_release['prerelease']:
-                    commits.append(release['body'])
-
+                    commits.append(cleanup(release['body']))
                 elif not target_release['prerelease'] and not release['prerelease']:
-                    commits.append(release['body'])
+                    commits.append(cleanup(release['body']))
 
             elif target_version < current_version and release['tag_name'] == target_version:
-                commits.append(release['body'])
-
+                commits.append(cleanup(release['body']))
             else:
                 break
-            # commits need cleanup
+
         return commits
