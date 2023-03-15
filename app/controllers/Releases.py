@@ -197,7 +197,7 @@ class Releases:
 
         return contributors
 
-    async def get_commits(self, repository: str, current_version: str, target_tag: str = "latest") -> str:
+    async def get_commits(self, repository: str, current_version: str, target_tag: str = "latest") -> list:
         """Get commit history from a given repository.
 
         Args:
@@ -206,11 +206,13 @@ class Releases:
             target_tag (str): lateset(default), prerelease, recent, tag_name
 
         Returns:
-            str: string containing the repository's commits between version
+            list: list containing the repository's commits between version
         """
-        commits = ""
+        commits = []
         releases = await self.httpx_client.get(f"https://api.github.com/repos/{repository}/releases").json()
-        target_version = await self.get_tag_release(repository, target_tag)['tag_name']
+        target_release = await self.get_tag_release(repository, target_tag)
+        target_version = target_release['tag_name']
+
         target_version = "".join(findall("\d+", target_version))
         current_version = "".join(findall("\d+", current_version))
 
@@ -225,10 +227,16 @@ class Releases:
 
         for release in releases:
             if target_version > current_version and release['tag_name'] > current_version:
-                commits += release['body']
+                if release['prerelease'] and target_release['prerelease']:
+                    commits.append(release['body'])
+
+                elif not target_release['prerelease'] and not release['prerelease']:
+                    commits.append(release['body'])
+
             elif target_version < current_version and release['tag_name'] == target_version:
-                commits += release['body']
+                commits.append(release['body'])
+
             else:
                 break
-        # commits need cleanup
+            # commits need cleanup
         return commits

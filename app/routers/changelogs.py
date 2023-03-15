@@ -13,7 +13,7 @@ config: dict = load_config()
 
 @router.get('/commits/{repository}/{current_version}/{target_tag}', response_model=ResponseModels.ChangelogsResponseModel, tags=['ReVanced Tools'])
 @cache(config['cache']['expire'])
-async def commits(repository: str, current_version: str, target_tag: str = "latest") -> str:
+async def commits(repository: str, current_version: str, target_tag: str = "latest") -> list:
     """Get commit history from a given repository.
 
     Args:
@@ -22,7 +22,7 @@ async def commits(repository: str, current_version: str, target_tag: str = "late
         target_tag (str): lateset(default), prerelease, recent, tag_name
 
     Returns:
-        str: string containing the repository's commits between version
+        list: string containing the repository's commits between version
     """
     
     return await releases.get_commits(repository, current_version, target_tag)
