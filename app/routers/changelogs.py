@@ -22,7 +22,7 @@ async def commits(repository: str, current_version: str, target_tag: str = "late
         target_tag (str): lateset(default), prerelease, recent, tag_name
 
     Returns:
-        list: string containing the repository's commits between version
+        list: list containing the repository's commits between version
     """
     
     return await releases.get_commits(repository, current_version, target_tag)
