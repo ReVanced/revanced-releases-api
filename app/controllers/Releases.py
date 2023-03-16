@@ -3,7 +3,7 @@ import uvloop
 from toolz.dicttoolz import keyfilter
 import asyncstdlib.builtins as a
 from app.utils.HTTPXClient import HTTPXClient
-from re import findall, sub
+from re import findall
 
 class Releases:
 
@@ -225,19 +225,21 @@ class Releases:
         target_version = int(target_version)
         current_version = int(current_version)
 
-        def cleanup(text: str) ->str:
+        def cleanup(body: str) ->list:
             #need more cleanups
-            return sub(r"\(https.+\)|\(", "", text) +"\n"
+            body = list(filter(lambda x :True if(x!="") else False, body.splitlines()))
+            body.append("")
+            return body
 
         for release in releases:
             if target_version > current_version and release['tag_name'] > current_version:
                 if release['prerelease'] and target_release['prerelease']:
-                    commits.append(cleanup(release['body']))
+                    commits.extend(cleanup(release['body']))
                 elif not target_release['prerelease'] and not release['prerelease']:
-                    commits.append(cleanup(release['body']))
+                    commits.extend(cleanup(release['body']))
 
             elif target_version < current_version and release['tag_name'] == target_version:
-                commits.append(cleanup(release['body']))
+                commits.extend(cleanup(release['body']))
             else:
                 break
 
