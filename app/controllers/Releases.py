@@ -3,7 +3,6 @@ import uvloop
 from toolz.dicttoolz import keyfilter
 import asyncstdlib.builtins as a
 from app.utils.HTTPXClient import HTTPXClient
-from re import findall
 
 class Releases:
 
@@ -208,22 +207,35 @@ class Releases:
         Returns:
             list: list containing the repository's commits between version
         """
-        commits = []
+        def to_numeric(string: str) -> str:
+            if not string.isnumeric():
+                numeric_str = ""
+                for char in string:
+                    if char.isdigit():
+                        numeric_str += char
+                return numeric_str
+            return string
+
+        def check_greater(check_string: str, check_with: str) -> bool :
+            check_string = to_numeric(check_string)
+            check_with = to_numeric(check_with)
+            diff = abs(len(check_string) - len(check_with))
+
+            if len(check_string) > len(check_with):
+                check_with += "0"*diff
+            elif len(check_string) < len(check_with):
+                check_string += "0"*diff
+
+            if int(check_string) > int(check_with):
+                return True
+            if int(check_string) < int(check_with):
+                return False
+            return None
+
         releases = await self.httpx_client.get(f"https://api.github.com/repos/{repository}/releases").json()
         target_release = await self.get_tag_release(repository, target_tag)
-        target_version = target_release['tag_name']
-
-        target_version = "".join(findall(r"\d+", target_version))
-        current_version = "".join(findall(r"\d+", current_version))
-
-        while len(target_version) != len(current_version):
-            if len(target_version) > len(current_version):
-                current_version += "0"
-            else:
-                target_version += "0"
-
-        target_version = int(target_version)
-        current_version = int(current_version)
+        target_prerelease = target_release['prerelease']
+        target_version = to_numeric(target_release['tag_name'])
 
         def cleanup(body: str) ->list:
             #need more cleanups
@@ -231,15 +243,23 @@ class Releases:
             body.append("")
             return body
 
+        commits = []
         for release in releases:
-            if target_version > current_version and release['tag_name'] > current_version:
-                if release['prerelease'] and target_release['prerelease']:
-                    commits.extend(cleanup(release['body']))
-                elif not target_release['prerelease'] and not release['prerelease']:
-                    commits.extend(cleanup(release['body']))
+            if check_greater(target_version, current_version):
+                if check_greater(release['tag_name'], current_version):
+                    if check_greater(target_version, release['tag_name']) in (True, None):
+                        if target_prerelease:
+                            if release['prerelease']:
+                                commits.extend(cleanup(release['body']))
 
-            elif target_version < current_version and release['tag_name'] == target_version:
-                commits.extend(cleanup(release['body']))
+                        elif not release['prerelease']:
+                            commits.extend(cleanup(release['body']))
+
+            elif check_greater(current_version, target_version):
+                if check_greater(release['tag_name'], target_version) == None:
+                    commits.extend(cleanup(release['body']))
+                    break
+
             else:
                 break
 
