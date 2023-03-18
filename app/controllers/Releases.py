@@ -3,6 +3,7 @@ import uvloop
 from toolz.dicttoolz import keyfilter
 import asyncstdlib.builtins as a
 from app.utils.HTTPXClient import HTTPXClient
+from packaging import version
 
 class Releases:
 
@@ -207,34 +208,13 @@ class Releases:
         Returns:
             list: list containing the repository's commits between version
         """
-        def to_numeric(string: str) -> str:
-            if not string.isnumeric():
-                numeric_str = ""
-                for char in string:
-                    if char.isdigit():
-                        numeric_str += char
-                return numeric_str
-            return string
 
-        def check_greater_or_equal(check_string: str, check_with: str) -> bool :
-            check_string = to_numeric(check_string)
-            check_with = to_numeric(check_with)
-            diff = abs(len(check_string) - len(check_with))
-
-            if len(check_string) > len(check_with):
-                check_with += "0"*diff
-            elif len(check_string) < len(check_with):
-                check_string += "0"*diff
-
-            if int(check_string) >= int(check_with):
-                return True
-
-            return False
+        to_version: version = lambda x: version.parse(x.replace('v', '', 1))
 
         releases = await self.httpx_client.get(f"https://api.github.com/repos/{repository}/releases").json()
         target_release = await self.get_tag_release(repository, target_tag)
-        target_prerelease = target_release['prerelease']
-        target_version = to_numeric(target_release['tag_name'])
+        current_version = to_version(current_version)
+        target_version = to_version(target_release['tag_name'])
 
         def cleanup(body: str) ->list:
             #need more cleanups
@@ -244,17 +224,21 @@ class Releases:
 
         commits = []
         for release in releases:
-            if check_greater_or_equal(target_version, current_version):
-                if check_greater_or_equal(release['tag_name'], current_version) and check_greater_or_equal(target_version, release['tag_name']):
-                    if target_prerelease:
+            if target_version > current_version:
+                if to_version(release['tag_name']) > current_version and target_version >= to_version(release['tag_name']):
+                    if target_version.is_prerelease:
                         if release['prerelease']:
                             commits.extend(cleanup(release['body']))
 
                     elif not release['prerelease']:
                         commits.extend(cleanup(release['body']))
 
-            elif check_greater_or_equal(release['tag_name'], target_version) and check_greater_or_equal(target_version, release['tag_name']):
-                commits.extend(cleanup(release['body']))
+            elif target_version < current_version:
+                if to_version(release['tag_name']) == target_version:
+                    commits.extend(cleanup(release['body']))
+                    break
+
+            else:
                 break
 
         return commits
