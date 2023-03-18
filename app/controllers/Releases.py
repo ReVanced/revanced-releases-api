@@ -216,7 +216,7 @@ class Releases:
                 return numeric_str
             return string
 
-        def check_greater(check_string: str, check_with: str) -> bool :
+        def check_greater_or_equal(check_string: str, check_with: str) -> bool :
             check_string = to_numeric(check_string)
             check_with = to_numeric(check_with)
             diff = abs(len(check_string) - len(check_with))
@@ -226,11 +226,10 @@ class Releases:
             elif len(check_string) < len(check_with):
                 check_string += "0"*diff
 
-            if int(check_string) > int(check_with):
+            if int(check_string) >= int(check_with):
                 return True
-            if int(check_string) < int(check_with):
-                return False
-            return None
+
+            return False
 
         releases = await self.httpx_client.get(f"https://api.github.com/repos/{repository}/releases").json()
         target_release = await self.get_tag_release(repository, target_tag)
@@ -245,22 +244,17 @@ class Releases:
 
         commits = []
         for release in releases:
-            if check_greater(target_version, current_version):
-                if check_greater(release['tag_name'], current_version):
-                    if check_greater(target_version, release['tag_name']) in (True, None):
-                        if target_prerelease:
-                            if release['prerelease']:
-                                commits.extend(cleanup(release['body']))
-
-                        elif not release['prerelease']:
+            if check_greater_or_equal(target_version, current_version):
+                if check_greater_or_equal(release['tag_name'], current_version) and check_greater_or_equal(target_version, release['tag_name']):
+                    if target_prerelease:
+                        if release['prerelease']:
                             commits.extend(cleanup(release['body']))
 
-            elif check_greater(current_version, target_version):
-                if check_greater(release['tag_name'], target_version) == None:
-                    commits.extend(cleanup(release['body']))
-                    break
+                    elif not release['prerelease']:
+                        commits.extend(cleanup(release['body']))
 
-            else:
+            elif check_greater_or_equal(release['tag_name'], target_version) and check_greater_or_equal(target_version, release['tag_name']):
+                commits.extend(cleanup(release['body']))
                 break
 
         return commits
