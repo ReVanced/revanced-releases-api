@@ -1,10 +1,9 @@
 import asyncio
 import uvloop
-import orjson
-from base64 import b64decode
 from toolz.dicttoolz import keyfilter
 import asyncstdlib.builtins as a
 from app.utils.HTTPXClient import HTTPXClient
+from packaging import version
 
 class Releases:
 
@@ -14,54 +13,97 @@ class Releases:
 
     httpx_client = HTTPXClient.create()
 
-    async def __get_release(self, repository: str) -> list:
+    async def get_tag_release(self, repository: str, tag: str) -> dict:
+        """get tag name from github release api.
+            
+            arg:
+                repository (str): Github's standard username/repository notation
+                tag (str): lateset- to get latest release
+                           prerelease - to get lateset prerelease
+                           recent - to get recent release either prerelease or stable whichever is recent
+                           tag_name - supply a valid version tag
+
+            returns:
+                dict: Release dict of supplied tag arg.
+        """
+
+        response = await self.httpx_client.get(f"https://api.github.com/repos/{repository}/releases")
+        release_dict = None
+
+        if response.status_code == 200:
+            for release in response.json():
+                match tag:
+                    case "recent":
+                        release_dict = release
+                        break
+
+                    case "prerelease":
+                        if release['prerelease']:
+                            release_dict = release
+                            break
+
+                    case "latest":
+                        if not release['prerelease']:
+                            release_dict = release
+                            break
+
+                    case _:
+                        if tag == release['tag_name']:
+                            release_dict = release
+                            break
+
+        return release_dict
+
+    async def __get_release(self, repository: str, tag: str = "latest") -> list:
         """Get assets from latest release in a given repository.
 
         Args:
-           repository (str): Github's standard username/repository notation
+            repository (str): Github's standard username/repository notation
+            tag (str): lateset(default)/ prerelease/ recent/ tag_name
+                        see get_tag_release() for more details.
 
         Returns:
            dict: dictionary of filename and download url
         """
 
         assets: list = []
-        response = await self.httpx_client.get(f"https://api.github.com/repos/{repository}/releases/latest")
+        release_dict = await self.get_tag_release(repository, tag)
 
-        if response.status_code == 200:
-            release_assets: dict = response.json()['assets']
-            release_version: str = response.json()['tag_name']
-            release_tarball: str = response.json()['tarball_url']
-            release_timestamp: str = response.json()['published_at']
+        release_assets: dict = release_dict['assets']
+        release_version: str = release_dict['tag_name']
+        release_tarball: str = release_dict['tarball_url']
+        release_timestamp: str = release_dict['published_at']
 
-            async def get_asset_data(asset: dict) -> dict:
-                return {'repository': repository,
-                        'version': release_version,
-                        'timestamp': asset['updated_at'],
-                        'name': asset['name'],
-                        'size': asset['size'],
-                        'browser_download_url': asset['browser_download_url'],
-                        'content_type': asset['content_type']
-                        }
+        async def get_asset_data(asset: dict) -> dict:
+            return {'repository': repository,
+                    'version': release_version,
+                    'timestamp': asset['updated_at'],
+                    'name': asset['name'],
+                    'size': asset['size'],
+                    'browser_download_url': asset['browser_download_url'],
+                    'content_type': asset['content_type']
+                    }
 
-            if release_assets:
-                assets = await asyncio.gather(*[get_asset_data(asset) for asset in release_assets])
-            else:
-                no_release_assets_data: dict = {'repository': repository,
-                                    'version': release_version,
-                                    'timestamp': release_timestamp,
-                                    'name': f"{repository.split('/')[1]}-{release_version}.tar.gz",
-                                    'browser_download_url': release_tarball,
-                                    'content_type': 'application/gzip'
-                                    }
-                assets.append(no_release_assets_data)
+        if release_assets:
+            assets = await asyncio.gather(*[get_asset_data(asset) for asset in release_assets])
+        else:
+            no_release_assets_data: dict = {'repository': repository,
+                                'version': release_version,
+                                'timestamp': release_timestamp,
+                                'name': f"{repository.split('/')[1]}-{release_version}.tar.gz",
+                                'browser_download_url': release_tarball,
+                                'content_type': 'application/gzip'
+                                }
+            assets.append(no_release_assets_data)
 
         return assets
 
-    async def get_latest_releases(self, repositories: list) -> dict:
+    async def get_latest_releases(self, repositories: dict) -> dict:
         """Runs get_release() asynchronously for each repository.
 
         Args:
-            repositories (list): List of repositories in Github's standard username/repository notation
+            repositories (dict): dict of repositories and tags in Github's standard username/repository notation
+            example (dict): {repo : tag, ...}
 
         Returns:
             dict: A dictionary containing assets from each repository
@@ -70,33 +112,42 @@ class Releases:
         releases: dict[str, list] = {}
         releases['tools'] = []
 
-        results: list = await asyncio.gather(*[self.__get_release(repository) for repository in repositories])
+        results: list = await asyncio.gather(*[self.__get_release(repository, tag) for repository, tag in repositories.items()])
 
         releases['tools'] = [asset for result in results for asset in result]
 
         return releases
 
-    async def __get_patches_json(self) -> dict:
+    async def __get_patches_json(self, repository: str, tag: str = "latest") -> dict:
         """Get revanced-patches repository's README.md.
+           
+           args:
+               repository (str): Github's standard username/repository notation
+               tag (str): lateset(default)/ prerelease/ recent/ tag_name
+                          see get_tag_release() for more details.
 
         Returns:
            dict: JSON content
         """
 
-        response = await self.httpx_client.get(f"https://api.github.com/repos/revanced/revanced-patches/contents/patches.json")
-        content = orjson.loads(
-            b64decode(response.json()['content']).decode('utf-8'))
+        release_dict = await self.get_tag_release(repository, tag)
+        for asset in release_dict['assets']:
+            if asset['name'] == "patches.json":
+                return await self.httpx_client.get(asset['browser_download_url']).json()
 
-        return content
-
-    async def get_patches_json(self) -> dict:
+    async def get_patches_json(self, repository: str, tag: str = "latest") -> dict:
         """Get patches.json from revanced-patches repository.
+           
+           args:
+               repository (str): Github's standard username/repository notation
+               tag (str): lateset(default), prerelease, recent, tag_name
+                            see get_tag_release() for more details.
 
         Returns:
             dict: Patches available for a given app
         """
 
-        patches: dict = await self.__get_patches_json()
+        patches: dict = await self.__get_patches_json(repository, tag)
 
         return patches
 
@@ -146,62 +197,48 @@ class Releases:
 
         return contributors
 
-    async def get_commits(self, org: str, repository: str, path: str) -> dict:
+    async def get_commits(self, repository: str, current_version: str, target_tag: str = "latest") -> list:
         """Get commit history from a given repository.
 
         Args:
-            org (str): Username of the organization | valid values: revanced or vancedapp
             repository (str): Repository name
-            path (str): Path to the file
-            per_page (int): Number of commits to return
-            since (str): ISO 8601 timestamp
-
-        Raises:
-            Exception: Raise a generic exception if the organization is not revanced or vancedapp
+            current_version (str): current version(vx.x.x) installed
+            target_tag (str): lateset(default), prerelease, recent, tag_name
 
         Returns:
-            dict: a dictionary containing the repository's latest commits
+            list: list containing the repository's commits between version
         """
 
-        payload: dict = {}
-        payload["repository"] = f"{org}/{repository}"
-        payload["path"] = path
-        payload["commits"] = []
+        to_version: version = lambda x: version.parse(x.replace('v', '', 1))
 
-        if org == 'revanced' or org == 'vancedapp':
-            _releases = await self.httpx_client.get(
-                f"https://api.github.com/repos/{org}/{repository}/releases?per_page=2"
-            )
+        releases = await self.httpx_client.get(f"https://api.github.com/repos/{repository}/releases").json()
+        target_release = await self.get_tag_release(repository, target_tag)
+        current_version = to_version(current_version)
+        target_version = to_version(target_release['tag_name'])
 
-            if _releases.status_code == 200:
-                releases = _releases.json()
-                if any(releases):
-                    since = releases[1]['created_at']
-                    until = releases[0]['created_at']
-                else:
-                    raise ValueError("No releases found")
+        def cleanup(body: str) ->list:
+            #need more cleanups
+            body = list(filter(lambda x :True if(x!="") else False, body.splitlines()))
+            body.append("")
+            return body
 
-                _response = await self.httpx_client.get(
-                    f"https://api.github.com/repos/{org}/{repository}/commits?path={path}&since={since}&until={until}"
-                )
-                
-                if _response.status_code == 200:
-                    response = _response.json()
+        commits = []
+        for release in releases:
+            if target_version > current_version:
+                if to_version(release['tag_name']) > current_version and target_version >= to_version(release['tag_name']):
+                    if target_version.is_prerelease:
+                        if release['prerelease']:
+                            commits.extend(cleanup(release['body']))
 
-                    async def get_commit_data(commit: dict) -> dict:
-                        return {'sha': commit['sha'],
-                                'author': commit['commit']['author']['name'],
-                                'date': commit['commit']['author']['date'],
-                                'message': commit['commit']['message'],
-                                'url': commit['html_url']
-                                }
-                        
-                    data: list = await asyncio.gather(*[get_commit_data(commit) for commit in response])
-                    
-                    payload['commits'].append(data)
-                else:
-                    raise ValueError("Error retrieving commits")
-        else:
-            raise ValueError("Invalid organization.")
-    
-        return payload
+                    elif not release['prerelease']:
+                        commits.extend(cleanup(release['body']))
+
+            elif target_version < current_version:
+                if to_version(release['tag_name']) == target_version:
+                    commits.extend(cleanup(release['body']))
+                    break
+
+            else:
+                break
+
+        return commits

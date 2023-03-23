@@ -54,8 +54,14 @@ database = 5
 [auth]
 access_token_expires = false
 
-[app]
-repositories = ["revanced/revanced-patcher", "revanced/revanced-patches", "revanced/revanced-integrations", "revanced/revanced-manager", "revanced/revanced-cli", "revanced/revanced-website", "revanced/revanced-releases-api"]
+[repositories]
+patcher = ["revanced/revanced-patcher", "latest"]
+patches = ["revanced/revanced-patches", "latest"]
+integration = ["revanced/revanced-integrations", "latest"]
+manager = ["revanced/revanced-manager", "latest"]
+cli = ["revanced/revanced-cli", "latest"]
+website = ["revanced/revanced-website", "latest"]
+release-api = ["revanced/revanced-releases-api", "latest"]
 
 [socials]
 website = "https://revanced.app"
