@@ -112,7 +112,7 @@ class Releases:
 
         keep: set = {'login', 'avatar_url', 'html_url', 'contributions'}
 
-        response = await self.httpx_client.get(f"https://api.github.com/repos/{repository}/contributors")
+        response = await self.httpx_client.get(f"https://api.github.com/repos/{repository}/contributors?per_page=100")
 
         # Looping over each contributor, filtering each contributor so that
         # keyfilter() returns a dictionary with only the key-value pairs that are in the "keep" set.
