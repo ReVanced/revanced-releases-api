@@ -2,7 +2,7 @@ import os
 import sys
 
 import logging
-import sentry_sdk
+#import sentry_sdk
 from app.main import app
 from loguru import logger
 from fastapi import FastAPI
@@ -11,9 +11,9 @@ from typing import Any
 from multiprocessing import cpu_count
 from gunicorn.glogging import Logger
 from gunicorn.app.base import BaseApplication
-from sentry_sdk.integrations.redis import RedisIntegration
-from sentry_sdk.integrations.httpx import HttpxIntegration
-from sentry_sdk.integrations.gnu_backtrace import GnuBacktraceIntegration
+#from sentry_sdk.integrations.redis import RedisIntegration
+#from sentry_sdk.integrations.httpx import HttpxIntegration
+#from sentry_sdk.integrations.gnu_backtrace import GnuBacktraceIntegration
 
 from app.dependencies import load_config
 
@@ -21,11 +21,11 @@ config: dict = load_config()
 
 # Enable sentry logging
 
-sentry_sdk.init(os.environ['SENTRY_DSN'], traces_sample_rate=1.0, integrations=[
-        RedisIntegration(),
-        HttpxIntegration(),
-        GnuBacktraceIntegration(),
-    ],)
+#sentry_sdk.init(os.environ['SENTRY_DSN'], traces_sample_rate=1.0, integrations=[
+#        RedisIntegration(),
+#        HttpxIntegration(),
+#        GnuBacktraceIntegration(),
+#    ],)
 
 LOG_LEVEL: Any = logging.getLevelName(config['logging']['level'])
 JSON_LOGS: bool = config['logging']['json_logs']
